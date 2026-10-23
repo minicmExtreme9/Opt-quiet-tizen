@@ -42,9 +42,9 @@ While the original upstream repository documented a targeted case study on a sin
    - Filtered with hardware Lanczos sampling (`BoxThenLanczos`) to eliminate GPU blurriness on 4K/QLED panels.
 5. **📊 Tested & Verified on Modern QLED Hardware**:
    - Verified on physical retail hardware: **Samsung QLED QN55Q7FAAPXPA** running firmware `T-RSLFUABC-0090-1300.9` (Tizen 9.0 / RoseL platform).
-6. **📦 1-Click Automated TV Deployment**:
-   - Self-contained distribution bundle under **10 MB** with `deploy-to-tv.bat` for automatic push, signature setup, and live execution.
-   - Pre-packaged standalone TPK for Tizen Studio and emulators.
+6. **📦 Pre-Built 1-Click TV Deployment Package**:
+   - Ready-to-run release bundle under **10 MB** — no .NET compiler or SDK installation required on your host PC.
+   - Includes `deploy-to-tv.bat` for hands-off automated TV deployment, plus a standalone `.tpk` package for Tizen Studio.
 
 ---
 
@@ -118,28 +118,35 @@ This repository is completely structured to be agent-readable. If you are using 
 
 ### 📥 Installation & Deployment
 
-#### Option 1: Direct TV Install (Recommended for Retail TVs)
+#### Option 1: Direct 1-Click TV Install (Recommended)
 
-Requires your Samsung TV to be on the same local Wi-Fi / Ethernet network.
+No compilation, Python, or SDK setup required. The standalone release package contains pre-built binaries, optimized 4K assets, and an automated deployment script.
 
-1. **Enable Developer Mode on your TV**:
-   - Go to the **Apps** screen on your TV.
-   - Press **`1` `2` `3` `4` `5`** on your physical remote.
-   - In the Developer Mode popup, toggle it to **ON**.
-   - Set the **Host PC IP** to your computer's local IP (e.g. `192.168.1.X`).
-   - **Reboot the TV in cold mode**: Hold the **Power** button on your remote for 4–5 seconds until the Samsung / QLED logo appears.
-2. **Deploy**:
-   - Download the latest [`QuietHome-SamsungTV-FullPackage.zip`](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases) from Releases.
-   - Extract the zip and run `tv-direct-install/deploy-to-tv.bat`.
-   - Enter your TV IP when prompted. The script automatically verifies root, installs the binary to `com.samsung.tv.CinemaGraphApp`, deploys assets, and launches Quiet Home.
+1. **Enable Developer Mode on your Samsung TV**:
+   - Open the **Apps** panel on your TV.
+   - On your physical remote, press **`1` `2` `3` `4` `5`** in sequence.
+   - When the Developer Mode dialog appears, toggle the switch to **ON**.
+   - Enter your computer's local network IP (e.g., `192.168.1.X`) in the **Host PC IP** field.
+   - **Perform a cold reboot**: Press and hold the **Power** button on your remote for ~5 seconds until the TV turns off and reboots displaying the Samsung / QLED startup logo.
 
-#### Option 2: TPK Install (Tizen Studio / Emulators)
+2. **Deploy with 1 Click**:
+   - Download the latest **[Quiet Home Full Package (`QuietHome-SamsungTV-FullPackage.zip`)](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases/latest)** from the [Releases page](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases).
+   - Extract the `.zip` archive on your computer.
+   - Double-click and run `tv-direct-install/deploy-to-tv.bat`.
+   - Enter your TV's local IP address when prompted (e.g., `192.168.1.32`).
+   - The script automatically verifies access, deploys the optimized assembly, syncs artwork, and launches Quiet Home directly on your screen.
 
-1. Open **Tizen Device Manager** or use the SDB CLI.
-2. Install the standalone package located in `tizen-tpk-installer/`:
-   ```sh
-   sdb install QuietHome-TV-1.0.0.tpk
-   ```
+#### Option 2: Standalone TPK Package (Tizen Studio / SDB CLI)
+
+For developers using Tizen Device Manager, emulators, or SDB CLI, the release archive includes a self-contained `.tpk` installer inside the `tizen-tpk-installer/` folder:
+
+```sh
+# Connect to your TV or emulator
+sdb connect <TV-IP>
+
+# Install the standalone TPK
+sdb install tizen-tpk-installer/QuietHome-TV-1.0.0.tpk
+```
 
 #### Option 3: Build from Source
 
