@@ -116,11 +116,36 @@ This repository is completely structured to be agent-readable. If you are using 
 
 ---
 
+### 📋 Prerequisites (Must-Haves)
+
+Before deploying to your TV, ensure your PC and TV have the following requirements ready:
+
+#### 1. TV Requirements
+* **Samsung Smart TV** running Tizen 6.5, 7.0, 8.0, or 9.0.
+* Connected to the **same local Wi-Fi or Ethernet network** as your computer.
+* **Developer Mode enabled** (instructions in Step 1 below).
+
+#### 2. PC Requirements (Must-Haves)
+* **Python 3.10+**: Ensure you tick the checkbox *"Add Python to PATH"* during installation ([python.org](https://www.python.org/downloads/)).
+* **Samsung Smart Development Bridge (`sdb.exe`)**: Required to establish the authenticated communication channel with the TV over port `26101`. Due to Samsung's proprietary license, SDB cannot be redistributed inside open-source repositories. Choose one of two options to obtain it:
+
+  * **Option A: Tizen CLI Tools Only (Recommended — Lightweight ~100 MB)**
+    1. Download the standalone **Tizen Studio CLI** installer from the [Tizen Developer Download Page](https://developer.tizen.org/development/tizen-studio/download).
+    2. Run the installer and add the `tizen-studio/tools` directory to your Windows system `PATH` (or place `sdb.exe` inside the project folder).
+    3. Verify in your terminal: `sdb version`.
+  
+  * **Option B: Tizen Studio with IDE (Full Development Suite — ~5 GB)**
+    1. Download and install **Tizen Studio with IDE** from the [Tizen Developer Download Page](https://developer.tizen.org/development/tizen-studio/download).
+    2. Includes the full graphical suite: **Tizen Device Manager**, Certificate Manager, and official emulators.
+    3. The deployment script automatically discovers `sdb.exe` at `C:\tizen-studio\tools\sdb.exe`.
+
+---
+
 ### 📥 Installation & Deployment
 
 #### Option 1: Direct 1-Click TV Install (Recommended)
 
-No compilation, Python, or SDK setup required. The standalone release package contains pre-built binaries, optimized 4K assets, and an automated deployment script.
+Once the prerequisites are ready, deployment is fully automated with no manual assembly compilation:
 
 1. **Enable Developer Mode on your Samsung TV**:
    - Open the **Apps** panel on your TV.
