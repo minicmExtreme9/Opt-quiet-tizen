@@ -1,7 +1,7 @@
 # Quiet Tizen (Enhanced Edition)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Original Author](https://img.shields.io/badge/Original%20Author-Chris%20Ritsen-informational.svg)](https://github.com/chris-ritsen/quiet-tizen)
+[![Original Author](https://img.shields.io/badge/Original%20Author-jss8649-informational.svg)](https://github.com/jss8649/quiet-tizen)
 [![Platform](https://img.shields.io/badge/Platform-Tizen%206.5%20%7C%207.0%20%7C%208.0%20%7C%209.0-0080FF.svg)](https://tizen.org)
 [![Runtime](https://img.shields.io/badge/.NET%20Runtime-6.0-512BD4.svg)](https://dotnet.microsoft.com)
 [![Target](https://img.shields.io/badge/Target-Samsung%20Smart%20TV-1428A0.svg)](https://samsung.com)
@@ -10,7 +10,7 @@
 A lightweight, ad-free, hardware-accelerated native launcher and optimization suite for **Samsung Tizen Smart TVs**. 
 
 > [!NOTE]
-> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/chris-ritsen/quiet-tizen) created by **Chris Ritsen**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, high-definition console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
+> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/jss8649/quiet-tizen) created by **jss8649**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, high-definition console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
 
 ---
 
@@ -161,7 +161,7 @@ git clone https://github.com/minicmExtreme9/Opt-quiet-tizen.git
 cd Opt-quiet-tizen
 
 # Original upstream repository:
-# https://github.com/chris-ritsen/quiet-tizen
+# https://github.com/jss8649/quiet-tizen
 
 # Run tests:
 python3 -m unittest discover -s tests -v
@@ -236,7 +236,7 @@ quiet-tizen/
 
 This project strictly adheres to open source principles, licensing agreements, and utmost respect for the original authors:
 
-- **Original Project & Research**: Created by **Chris Ritsen** ([@chris-ritsen](https://github.com/chris-ritsen)) at [quiet-tizen](https://github.com/chris-ritsen/quiet-tizen). All credit for the reverse engineering methodology, architecture design, and original case study belongs to Chris Ritsen.
+- **Original Project & Research**: Created by **jss8649** ([@jss8649](https://github.com/jss8649)) at [quiet-tizen](https://github.com/jss8649/quiet-tizen). All credit for the reverse engineering methodology, architecture design, and original case study belongs to the original author (jss8649).
 - **Visual Design Concept**: Adapted from the open-source [Free My TV](https://github.com/simbasjungles/free-my-tv) project by Simba's Jungles. This repository is a native Tizen C#/NUI rewrite of the visual approach, not an Android port.
 - **Temporary Access Route**: The archive-launcher access mechanism is based on [samsung-tv-root](https://github.com/chris-ritsen/samsung-tv-root) by Chris Ritsen.
 - **License**: All original and modified code is licensed under the [MIT License](LICENSE).
