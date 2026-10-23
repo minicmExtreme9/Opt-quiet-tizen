@@ -18,7 +18,7 @@ A lightweight, ad-free, hardware-accelerated native launcher and optimization su
 
 ![Quiet Home Preview](docs/quiet-home-preview.png)
 
-*Quiet Home running live on a Samsung QLED TV: distraction-free layout with direct HDMI inputs, your favorite streaming apps, quick settings, and zero sponsored bloatware.*
+*Quiet Home running live on a Samsung QLED TV: distraction-free layout with direct HDMI inputs, your favorite streaming apps, quick settings, and zero sponsored bloatware (And to my liking, no recommended content).*
 
 ---
 
