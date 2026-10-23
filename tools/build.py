@@ -12,8 +12,10 @@ ROOT = Path(__file__).resolve().parents[1]
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("target", choices=["payloads", "launcher", "all"])
-    parser.add_argument("--dotnet", default=os.environ.get("DOTNET", "dotnet"))
+    default_dotnet = os.environ.get("DOTNET") or (str(Path.home() / ".dotnet/dotnet.exe") if (Path.home() / ".dotnet/dotnet.exe").is_file() else "dotnet")
+    parser.add_argument("--dotnet", default=default_dotnet)
     parser.add_argument("--framework", type=Path, default=ROOT / ".local/tv-framework")
+    parser.add_argument("--container", default="CinemaGraphApp", choices=["CinemaGraphApp", "BixbyPromotion"])
     args = parser.parse_args()
     jobs = []
     if args.target in ("payloads", "all"):
@@ -25,7 +27,7 @@ def main():
                 parser.error(f"Missing {name}.dll. Read docs/04-launcher.md; these are not bundled.")
         for name in ("Home", "QuickLaunch"):
             jobs.append((ROOT / f"launcher/src/{name}.csproj", name, name,
-                         [f"-p:TV_FRAMEWORK_DIR={args.framework.resolve()}"]))
+                         [f"-p:TV_FRAMEWORK_DIR={args.framework.resolve()}", f"-p:LAUNCHER_ASSEMBLY_NAME={args.container}"]))
         jobs.append((ROOT / "launcher/probe/Probe.csproj", "Probe", "Probe", []))
     for project, output, intermediate, extra in jobs:
         subprocess.run([
@@ -38,7 +40,13 @@ def main():
     if args.target in ("launcher", "all"):
         destination = ROOT / ".local/package"
         destination.mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ROOT / ".local/build/Home/BixbyPromotion.dll", destination / "BixbyPromotion.dll")
+        launcher_dll = ROOT / f".local/build/Home/{args.container}.dll"
+        shutil.copyfile(launcher_dll, destination / f"{args.container}.dll")
+        runtime_config = ROOT / f".local/build/Home/{args.container}.runtimeconfig.json"
+        if runtime_config.is_file():
+            shutil.copyfile(runtime_config, destination / f"{args.container}.runtimeconfig.json")
+        if args.container != "BixbyPromotion" and (ROOT / ".local/build/Home/BixbyPromotion.dll").is_file():
+            shutil.copyfile(ROOT / ".local/build/Home/BixbyPromotion.dll", destination / "BixbyPromotion.dll")
         shutil.copyfile(ROOT / ".local/build/QuickLaunch/QuickLaunch.dll", destination / "QuickLaunch.dll")
         shutil.copyfile(ROOT / ".local/build/Probe/Probe.dll", destination / "Probe.dll")
         assets = destination / "quiet-home"

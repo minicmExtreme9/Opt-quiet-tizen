@@ -15,6 +15,10 @@ import sys
 from datetime import datetime, timezone
 
 ROOT = Path(__file__).resolve().parents[1]
+for extra in [r"C:\Program Files\Git\usr\bin", str(Path.home() / ".dotnet")]:
+    if Path(extra).is_dir() and extra not in os.environ.get("PATH", ""):
+        os.environ["PATH"] = extra + os.pathsep + os.environ.get("PATH", "")
+
 sys.path.insert(0, str(ROOT / "vendor"))
 from samsung_tv_root.archive_root import probe, _check_target, _capture
 from samsung_tv_root.sdb import SdbClient, find_sdb
@@ -48,10 +52,32 @@ def observed_model(client):
     return rows[0][-1]
 
 
-def check_identity(model, firmware):
-    if model != PROFILE["model"]:
+def find_profile(model=None, firmware=None):
+    profiles_dir = ROOT / "profiles"
+    if model and firmware:
+        for p in profiles_dir.glob("*.json"):
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                if data.get("model") == model and data.get("firmware") == firmware:
+                    return data
+            except Exception:
+                pass
+        for p in profiles_dir.glob("*.json"):
+            try:
+                data = json.loads(p.read_text(encoding="utf-8"))
+                if data.get("model") == model:
+                    return data
+            except Exception:
+                pass
+    return PROFILE
+
+
+def check_identity(model, firmware, profile=None):
+    if profile is None:
+        profile = find_profile(model, firmware)
+    if model != profile["model"]:
         raise ValueError(f"Unsupported model {model!r}; stop and investigate a separate profile.")
-    if firmware != PROFILE["firmware"]:
+    if firmware != profile["firmware"]:
         raise ValueError("Supply --firmware with the exact version read from About This TV. "
                          "Only the documented build is accepted. Do not guess this value.")
 
@@ -85,12 +111,17 @@ def decode_pull(stdout):
 
 
 def main():
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    if hasattr(sys.stderr, 'reconfigure'):
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
     os.umask(0o077)
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", required=True, help="The owner's TV IPv4 address; never auto-discovered")
     parser.add_argument("--firmware", help="Operator-verified version from the TV's About screen")
     parser.add_argument("--sdb", help="Path to Samsung's separately installed SDB")
     parser.add_argument("--callback-host", help="This computer's LAN IPv4 if route detection is wrong")
+    parser.add_argument("--profile", type=Path, help="Target device profile JSON")
     sub = parser.add_subparsers(dest="action", required=True)
     sub.add_parser("doctor", help="Read SDB identity and archive-route capabilities; does not obtain root")
     sub.add_parser("root-check", help="Temporarily obtain root and run id; no configuration changes")
@@ -121,7 +152,8 @@ def main():
         print(_capture(client, "uname -srmo; readlink -f /usr/share/dotnet.tizen/netcoreapp"))
         print("Preflight only. Firmware must be read on the TV; root is not yet confirmed.")
         return
-    check_identity(model, args.firmware)
+    active_profile = json.loads(args.profile.read_text(encoding="utf-8")) if args.profile else find_profile(model, args.firmware)
+    check_identity(model, args.firmware, active_profile)
     if args.action == "push":
         if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_.-]{0,100}", args.name):
             raise ValueError("Use a simple staging filename without directory components.")
@@ -142,11 +174,11 @@ def main():
         private_path(args.local)
         command = pull_command(args.remote)
     elif args.script:
-        script = args.script.read_bytes()
+        script = args.script.read_bytes().replace(b"\r\n", b"\n")
         if len(script) > 45000:
             raise ValueError("Script too large for the bounded command channel; split into phases.")
         encoded = base64.b64encode(script).decode()
-        command = f"printf '%s' {shlex.quote(encoded)} | /bin/sh -s -- " + shlex.join(args.arg)
+        command = f"printf '%s' {shlex.quote(encoded)} | base64 -d | /bin/sh -s -- " + shlex.join(args.arg)
     else:
         if args.arg:
             raise ValueError("--arg requires --script.")

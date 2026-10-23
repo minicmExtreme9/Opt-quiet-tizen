@@ -1,7 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
  <PropertyGroup>
-  <OutputType>Exe</OutputType><TargetFramework>net6.0</TargetFramework><AssemblyName>BixbyPromotion</AssemblyName>
+  <OutputType>Exe</OutputType><TargetFramework>net6.0</TargetFramework>
+  <AssemblyName Condition="'$(LAUNCHER_ASSEMBLY_NAME)' == ''">CinemaGraphApp</AssemblyName>
+  <AssemblyName Condition="'$(LAUNCHER_ASSEMBLY_NAME)' != ''">$(LAUNCHER_ASSEMBLY_NAME)</AssemblyName>
   <UseAppHost>false</UseAppHost><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DebugType>none</DebugType><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable>
+  <Optimize>true</Optimize>
+  <ServerGarbageCollection>false</ServerGarbageCollection>
+  <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+  <RetainVMGarbageCollection>false</RetainVMGarbageCollection>
+  <TieredCompilation>true</TieredCompilation>
+  <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
  </PropertyGroup>
  <ItemGroup><Compile Include="Home.cs" /><Compile Include="AppLibrary.cs" /></ItemGroup>
  <ItemGroup>

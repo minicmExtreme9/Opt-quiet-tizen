@@ -39,6 +39,12 @@ public static class AppLibrary
   }
   return apps;
  }
+ public static void Save(string path, List<LibraryApp> apps)
+ {
+  var options = new JsonSerializerOptions { WriteIndented = true };
+  string json = JsonSerializer.Serialize(apps, options);
+  File.WriteAllText(path, json);
+ }
  public static int PageCount(int count)=>(count+PageSize-1)/PageSize;
  public static int VisibleCount(int count,int page)=>Math.Max(0,Math.Min(PageSize,count-page*PageSize));
  // Return an absolute catalog index. -1 moves focus to the navigation tabs.

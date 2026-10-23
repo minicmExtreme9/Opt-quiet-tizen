@@ -35,7 +35,7 @@
     "Asset": "placeholders/card-3.svg",
     "Description": "Movies & series",
     "Fit": "cover",
-    "Background": "#111318",
+    "Background": "#0B121C",
     "Width": 640,
     "Height": 360
   },
@@ -65,7 +65,7 @@
     "Asset": "placeholders/card-6.svg",
     "Description": "Music & podcasts",
     "Fit": "cover",
-    "Background": "#1ED760",
+    "Background": "#0F1C15",
     "Width": 640,
     "Height": 360
   },
@@ -119,5 +119,35 @@
     "Width": 100,
     "Height": 112,
     "Utility": true
+  },
+  {
+    "Name": "Pluto TV",
+    "Id": "X1pKpFCiUu.PlutoTV",
+    "Asset": "app-icons/pluto.png",
+    "Description": "Free Live TV & Movies",
+    "Fit": "cover",
+    "Background": "#FFEB01",
+    "Width": 640,
+    "Height": 360
+  },
+  {
+    "Name": "Paramount+",
+    "Id": "rJyOSqC6Up.PPlusIntl",
+    "Asset": "app-icons/paramount.png",
+    "Description": "Movies & Originals",
+    "Fit": "cover",
+    "Background": "#223A66",
+    "Width": 640,
+    "Height": 360
+  },
+  {
+    "Name": "Apple Music",
+    "Id": "org.tizen.apple.apple-music",
+    "Asset": "app-icons/apple-music.png",
+    "Description": "Music streaming",
+    "Fit": "cover",
+    "Background": "#FE012F",
+    "Width": 640,
+    "Height": 360
   }
 ]

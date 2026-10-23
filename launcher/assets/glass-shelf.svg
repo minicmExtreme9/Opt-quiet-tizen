@@ -1,1 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="280" viewBox="0 0 1920 280"><defs><linearGradient id="glass" x2="0" y2="1"><stop stop-color="#fff" stop-opacity=".82"/><stop offset=".15" stop-color="#fff" stop-opacity=".51"/><stop offset=".7" stop-color="#fff" stop-opacity=".30"/><stop offset="1" stop-color="#f8f9fc" stop-opacity=".43"/></linearGradient><linearGradient id="edge" x2="0" y2="1"><stop stop-color="#fff"/><stop offset=".45" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#fff" stop-opacity=".9"/></linearGradient></defs><rect x="18" y="41" width="1884" height="217" rx="84" fill="#242632" opacity=".018"/><rect x="23" y="43" width="1874" height="214" rx="79" fill="#242632" opacity=".018"/><rect x="28" y="44" width="1864" height="212" rx="74" fill="#242632" opacity=".018"/><rect x="32" y="46" width="1856" height="210" rx="70" fill="#242632" opacity=".018"/><rect x="36" y="47" width="1848" height="208" rx="66" fill="#242632" opacity=".018"/><rect x="40" y="30" width="1840" height="206" rx="62" fill="url(#glass)" stroke="url(#edge)" stroke-width="2"/><path d="M103 31H1817" stroke="#fff" stroke-width="4" opacity=".6"/></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="280" viewBox="0 0 1920 280">
+  <defs>
+    <linearGradient id="glass" x2="0" y2="1">
+      <stop stop-color="#fff" stop-opacity=".82"/>
+      <stop offset=".15" stop-color="#fff" stop-opacity=".51"/>
+      <stop offset=".7" stop-color="#fff" stop-opacity=".30"/>
+      <stop offset="1" stop-color="#f8f9fc" stop-opacity=".43"/>
+    </linearGradient>
+  </defs>
+  <rect x="18" y="41" width="1884" height="217" rx="84" fill="#242632" opacity=".018"/>
+  <rect x="23" y="43" width="1874" height="214" rx="79" fill="#242632" opacity=".018"/>
+  <rect x="28" y="44" width="1864" height="212" rx="74" fill="#242632" opacity=".018"/>
+  <rect x="32" y="46" width="1856" height="210" rx="70" fill="#242632" opacity=".018"/>
+  <rect x="36" y="47" width="1848" height="208" rx="66" fill="#242632" opacity=".018"/>
+  <rect x="40" y="30" width="1840" height="206" rx="62" fill="url(#glass)" stroke="#ffffff" stroke-opacity=".55" stroke-width="2"/>
+</svg>
