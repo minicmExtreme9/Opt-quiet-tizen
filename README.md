@@ -35,16 +35,22 @@ While the original upstream repository documented a targeted case study on a sin
    - Natural, organic scale, depth, and elevation transitions styled after **Apple TV (tvOS)**.
    - Cards smoothly zoom and elevate with hardware-accelerated cubic easing when navigating via the remote.
    - Driven directly by the native Tizen DALi GPU compositor at a solid **60 FPS** without web DOM layout shifts.
-3. **⚡ 100% Native Tactile Audio Feedback**:
-   - Integrated with Samsung's native `libmmfkeysound.so.0` (`mm_sound_play_keysound`), delivering instant tactile remote clicks without spawning child processes or risking kernel thread crashes.
-4. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:
+3. **⚡ Native TV Audio Feedback & Toggle**:
+   - Integrated with Samsung's native system audio feedback (libfeedback.so.0), delivering the authentic TV remote navigation click with zero latency and an on/off sound toggle.
+4. **🔧 Launcher Settings & Custom HDMI Tags**:
+   - Access via the dedicated **Wrench icon** in the top-right toolbar.
+   - Customize HDMI 1, 2, and 3 names and descriptions on the fly, with quick gaming and device presets.
+   - Integrated **5-Language Switcher**: Español, English, Deutsch, Português, and Français.
+5. **📄 Smart Pagination Dots for Apps**:
+   - Dynamic page indicator (● ○ ○) in the Apps library when apps span multiple pages, deactivated when single-page to conserve memory.
+6. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:
    - Custom high-definition assets for modern consoles (**PlayStation 4 / PC**, **Nintendo Switch**, **HDMI 3**) and streaming services (**Netflix**, **YouTube**, **Crunchyroll**, **HBO Max**, **Disney+**, **Apple Music**, and more).
-   - Filtered with hardware Lanczos sampling (`BoxThenLanczos`) to eliminate GPU blurriness on 4K/QLED panels.
-5. **📊 Tested & Verified on Modern QLED Hardware**:
-   - Verified on physical retail hardware: **Samsung QLED QN55Q7FAAPXPA** running firmware `T-RSLFUABC-0090-1300.9` (Tizen 9.0 / RoseL platform).
-6. **📦 Pre-Built 1-Click TV Deployment Package**:
-   - Ready-to-run release bundle under **10 MB** — no .NET compiler or SDK installation required on your host PC.
-   - Includes `deploy-to-tv.bat` for hands-off automated TV deployment, plus a standalone `.tpk` package for Tizen Studio.
+   - Seamless return from apps with zero multi-frame resize glitch.
+7. **📊 Tested & Verified on Modern QLED Hardware**:
+   - Verified on physical retail hardware: **Samsung QLED QN55Q7FAAPXPA** running firmware T-RSLFUABC-0090-1300.9 (Tizen 9.0 / RoseL platform).
+8. **📦 Pre-Built 1-Click TV Deployment Package**:
+   - Ready-to-run release bundle — no .NET compiler or SDK installation required on your host PC.
+   - Includes deploy-to-tv.bat for hands-off automated TV deployment, plus a standalone .tpk package for Tizen Studio.
 
 ---
 
