@@ -10,15 +10,15 @@
 A lightweight, ad-free, hardware-accelerated native launcher and optimization suite for **Samsung Tizen Smart TVs**. 
 
 > [!NOTE]
-> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/chris-ritsen/quiet-tizen) created by **Chris Ritsen**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, high-definition console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
+> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/chris-ritsen/quiet-tizen) created by **Chris Ritsen**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, high-definition console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
 
 ---
 
 ## 📸 Preview
 
-![Quiet Home Preview](docs/quiet-home-preview.svg)
+![Quiet Home Preview](docs/quiet-home-preview.png)
 
-*Quiet Home features a distraction-free layout with direct HDMI inputs, your favorite streaming apps, quick settings, and zero sponsored bloatware.*
+*Quiet Home running live on a Samsung QLED TV: distraction-free layout with direct HDMI inputs, your favorite streaming apps, quick settings, and zero sponsored bloatware.*
 
 ---
 
@@ -31,14 +31,18 @@ While the original upstream repository documented a targeted case study on a sin
    - Distinct amber/gold focus ring with elevated card z-index.
    - Move apps fluidly across grid slots and multiple pages using the D-pad arrows.
    - Atomic instant persistence directly to local storage (`apps.json`).
-2. **⚡ 100% Native Tactile Audio Feedback**:
+2. **🍏 Fluid Apple TV-Styled Focus Animations**:
+   - Natural, organic scale, depth, and elevation transitions styled after **Apple TV (tvOS)**.
+   - Cards smoothly zoom and elevate with hardware-accelerated cubic easing when navigating via the remote.
+   - Driven directly by the native Tizen DALi GPU compositor at a solid **60 FPS** without web DOM layout shifts.
+3. **⚡ 100% Native Tactile Audio Feedback**:
    - Integrated with Samsung's native `libmmfkeysound.so.0` (`mm_sound_play_keysound`), delivering instant tactile remote clicks without spawning child processes or risking kernel thread crashes.
-3. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:
+4. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:
    - Custom high-definition assets for modern consoles (**PlayStation 4 / PC**, **Nintendo Switch**, **HDMI 3**) and streaming services (**Netflix**, **YouTube**, **Crunchyroll**, **HBO Max**, **Disney+**, **Apple Music**, and more).
    - Filtered with hardware Lanczos sampling (`BoxThenLanczos`) to eliminate GPU blurriness on 4K/QLED panels.
-4. **📊 Tested & Verified on Modern QLED Hardware**:
+5. **📊 Tested & Verified on Modern QLED Hardware**:
    - Verified on physical retail hardware: **Samsung QLED QN55Q7FAAPXPA** running firmware `T-RSLFUABC-0090-1300.9` (Tizen 9.0 / RoseL platform).
-5. **📦 1-Click Automated TV Deployment**:
+6. **📦 1-Click Automated TV Deployment**:
    - Self-contained distribution bundle under **10 MB** with `deploy-to-tv.bat` for automatic push, signature setup, and live execution.
    - Pre-packaged standalone TPK for Tizen Studio and emulators.
 
@@ -56,6 +60,7 @@ Here is the real-world performance measured live on a physical **Samsung QN55Q7F
 | **First UI Render Time** | 2,400 – 4,500 ms (ad network delay) | 1,200 – 2,200 ms (DOM parse & layout) | **104 – 114 ms** (measured live) |
 | **D-Pad Navigation Latency** | 180 – 350 ms | 220 – 450 ms (event loop queue) | **< 16 ms** (direct hardware event loop) |
 | **Display Refresh Rate** | 25 – 45 FPS (stutter during ad refreshes) | 15 – 25 FPS (CPU throttling on CSS blur) | **Solid 60 FPS** (hardware compositing) |
+| **Focus Animation Feel** | Clunky step animations | CSS transition drops frames on blur | **Smooth Apple TV-styled hardware zoom & easing** |
 | **Tactile Audio Latency** | ~120 ms | > 200 ms (Web Audio context) | **< 5 ms** (`libmmfkeysound.so.0`) |
 | **Network Traffic on Launch** | Heavy (telemetry & dynamic ad banners) | Moderate/Heavy (TMDB API, weather, remote images) | **0 bytes** (100% offline & autonomous) |
 | **Available RAM (`MemAvailable`)** | ~500 – 540 MiB | ~520 – 580 MiB | **~900 – 922 MiB** available for gaming & apps |
@@ -69,6 +74,7 @@ Here is the real-world performance measured live on a physical **Samsung QN55Q7F
 ## 🎮 Features
 
 - **Direct Hardware Inputs**: Instant 1-click switching to HDMI 1, HDMI 2, or HDMI 3 without traversing deep vendor menus.
+- **Apple TV (tvOS) Motion & Aesthetics**: Silky-smooth focus transitions, subtle depth elevation, and reactive cards designed for tactile remote navigation.
 - **Native Quick Settings**: Adjust Volume, Brightness, Game Mode, Sleep Timer, and Mute directly on screen without opening Samsung's full-screen menu.
 - **Dark & Light Mode**: Built-in SVG-rendered themes switchable with one click from the toolbar.
 - **DualSense / Bluetooth Pairing**: Direct shortcut to Samsung's Bluetooth controller pairing subsystem.
@@ -100,47 +106,19 @@ App reordering works natively using only your standard TV remote:
 
 ---
 
-## 🤖 Give this repository to your coding agent
+## 🚀 Getting Started
 
-Just like the original project, this repository is designed to be agent-readable. Clone the repository, open it with your AI assistant, and provide the original author's prompt:
+### 🤖 Using with an AI Coding Agent
+
+This repository is completely structured to be agent-readable. If you are using Codex, Claude, ChatGPT, or Antigravity, clone the repository, open it in your assistant workspace, and hand it the original author's prompt:
 
 > *Read README.md and AGENTS.md, then inspect the documentation before touching my TV. Help me reproduce Quiet Tizen on a TV I own. First identify its exact model, firmware and runtime, compare them with the tested profile, and show me any compatibility gaps. Keep HDMI, sound, networking, Bluetooth and accessibility working. Prefer HDMI and minimize smart features; keep the streaming apps I choose. Back up my actual settings and prepare rollback before each change. Install and verify Quiet Home before assigning it to Home/startup or replacing the slow settings sidebar. Use the measured findings and known limitations rather than assuming every package is spyware or promising a particular speed improvement.*
 
 ---
 
-## 📚 Walkthrough & Technical Documentation
+### 📥 Installation & Deployment
 
-Quiet Tizen includes comprehensive documentation inherited from the original project and updated for modern platforms:
-
-1. [Understand compatibility and inventory the TV](docs/01-inventory.md).
-2. [Enable Developer Mode and check temporary access](docs/02-access.md).
-3. [Take snapshots and apply selected cleanup](docs/03-cleanup.md).
-4. [Build, install and assign Quiet Home](docs/04-launcher.md).
-5. [Pair a DualSense using the TV's Bluetooth support](docs/05-controller.md).
-6. [Customize apps, fetch artwork and keep it preloaded](docs/06-artwork.md).
-7. [Diagnose slow streaming apps and view benchmarks](docs/07-performance.md).
-8. [Understand privacy and telemetry findings](docs/08-privacy.md).
-9. [Restore the original experience safely](docs/09-recovery.md).
-
----
-
-## 🔬 Tested Hardware Comparison
-
-| Item | Original Upstream Baseline | Enhanced Fork (This Repository) |
-|---|---|---|
-| **Model** | `UN75U8000FFXZA` (2025 U8000F) | `QN55Q7FAAPXPA` (QLED 55") |
-| **Firmware** | `T-KSU2EFAKUC-0090-1300.9` | `T-RSLFUABC-0090-1300.9` |
-| **Platform** | Tizen 9.0, Linux 5.4.261, ARMv7 | Tizen 9.0, Linux 5.4.261, ARMv7 (RoseL) |
-| **Runtime** | .NET Runtime 6.0.9 | .NET Runtime 6.0.9 |
-| **Icon Reordering** | Fixed static JSON order | **Interactive D-pad 500ms long-press reorder** |
-| **Navigation Click** | System default / silent | **Native `libmmfkeysound.so.0` tactile sound** |
-| **Deployment** | Multi-step SDB shell scripts | **1-click automated script (`deploy-to-tv.bat`) + TPK** |
-
----
-
-## 📥 Installation
-
-### Option 1: Direct TV Install (Recommended for Retail TVs)
+#### Option 1: Direct TV Install (Recommended for Retail TVs)
 
 Requires your Samsung TV to be on the same local Wi-Fi / Ethernet network.
 
@@ -155,7 +133,7 @@ Requires your Samsung TV to be on the same local Wi-Fi / Ethernet network.
    - Extract the zip and run `tv-direct-install/deploy-to-tv.bat`.
    - Enter your TV IP when prompted. The script automatically verifies root, installs the binary to `com.samsung.tv.CinemaGraphApp`, deploys assets, and launches Quiet Home.
 
-### Option 2: TPK Install (Tizen Studio / Emulators)
+#### Option 2: TPK Install (Tizen Studio / Emulators)
 
 1. Open **Tizen Device Manager** or use the SDB CLI.
 2. Install the standalone package located in `tizen-tpk-installer/`:
@@ -163,7 +141,7 @@ Requires your Samsung TV to be on the same local Wi-Fi / Ethernet network.
    sdb install QuietHome-TV-1.0.0.tpk
    ```
 
-### Option 3: Build from Source
+#### Option 3: Build from Source
 
 Requirements:
 - Python 3.12+
@@ -188,6 +166,37 @@ python3 -m unittest discover -s tests -v
 # Build the native launcher:
 python tools/build.py launcher --framework .local/tv-framework
 ```
+
+---
+
+## 📚 Technical Documentation & Walkthrough
+
+Inherited from the original project and updated for modern platforms:
+
+1. [Understand compatibility and inventory the TV](docs/01-inventory.md).
+2. [Enable Developer Mode and check temporary access](docs/02-access.md).
+3. [Take snapshots and apply selected cleanup](docs/03-cleanup.md).
+4. [Build, install and assign Quiet Home](docs/04-launcher.md).
+5. [Pair a DualSense using the TV's Bluetooth support](docs/05-controller.md).
+6. [Customize apps, fetch artwork and keep it preloaded](docs/06-artwork.md).
+7. [Diagnose slow streaming apps and view benchmarks](docs/07-performance.md).
+8. [Understand privacy and telemetry findings](docs/08-privacy.md).
+9. [Restore the original experience safely](docs/09-recovery.md).
+
+---
+
+## 🔬 Tested Hardware Comparison
+
+| Item | Original Upstream Baseline | Enhanced Fork (This Repository) |
+|---|---|---|
+| **Model** | `UN75U8000FFXZA` (2025 U8000F) | `QN55Q7FAAPXPA` (QLED 55") |
+| **Firmware** | `T-KSU2EFAKUC-0090-1300.9` | `T-RSLFUABC-0090-1300.9` |
+| **Platform** | Tizen 9.0, Linux 5.4.261, ARMv7 | Tizen 9.0, Linux 5.4.261, ARMv7 (RoseL) |
+| **Runtime** | .NET Runtime 6.0.9 | .NET Runtime 6.0.9 |
+| **Animations** | Static snap navigation | **Fluid Apple TV-styled focus zoom & depth easing** |
+| **Icon Reordering** | Fixed static JSON order | **Interactive D-pad 500ms long-press reorder** |
+| **Navigation Click** | System default / silent | **Native `libmmfkeysound.so.0` tactile sound** |
+| **Deployment** | Multi-step SDB shell scripts | **1-click automated script (`deploy-to-tv.bat`) + TPK** |
 
 ---
 
