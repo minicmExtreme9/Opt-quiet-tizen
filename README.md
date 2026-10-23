@@ -1,4 +1,4 @@
-# Quiet Tizen (Enhanced Edition)
+# Opt-quiet-tizen v1.0
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Original Author](https://img.shields.io/badge/Original%20Author-jss8649-informational.svg)](https://github.com/jss8649/quiet-tizen)
@@ -24,7 +24,7 @@ A lightweight, ad-free, hardware-accelerated native launcher and optimization su
 
 ## 🚀 Why this Fork? (Key Enhancements)
 
-While the original upstream repository documented a targeted case study on a single U8000 model, this fork transforms Quiet Tizen into a **practical, feature-complete daily driver**:
+While the original upstream repository documented a targeted case study on a single U8000 model, this fork transforms Quiet Tizen into **Opt-quiet-tizen v1.0**, a **practical, feature-complete daily driver**:
 
 1. **📱 Native Remote-Control Icon Reordering**:
    - Long-press **OK / Enter** for 500 ms on any app icon to enter interactive edit mode.
@@ -54,7 +54,7 @@ Smart TV SoCs have limited CPU horsepower. Architectural choices dictate whether
 
 Here is the real-world performance measured live on a physical **Samsung QN55Q7FAAPXPA**:
 
-| Metric | Stock Samsung Smart Hub | Web Launchers (Free My TV / TizenBrew) | Quiet Home (This Fork) |
+| Metric | Stock Samsung Smart Hub | Web Launchers (Free My TV / TizenBrew) | Opt-quiet-tizen v1.0 |
 |---|---|---|---|
 | **Underlying Engine** | Heterogeneous (native shell + web widget embeds + ad network) | Chromium/WebKit Web Engine inside container | **Native .NET 6.0 with Tizen NUI / DALi GPU pipeline** |
 | **First UI Render Time** | 2,400 – 4,500 ms (ad network delay) | 1,200 – 2,200 ms (DOM parse & layout) | **104 – 114 ms** (measured live) |
@@ -155,7 +155,7 @@ Once the prerequisites are ready, deployment is fully automated with no manual a
    - **Perform a cold reboot**: Press and hold the **Power** button on your remote for ~5 seconds until the TV turns off and reboots displaying the Samsung / QLED startup logo.
 
 2. **Deploy with 1 Click**:
-   - Download the latest **[Quiet Home Full Package (`QuietHome-SamsungTV-FullPackage.zip`)](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases/latest)** from the [Releases page](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases).
+   - Download the latest **[Opt-quiet-tizen v1.0 Package (`Opt-quiet-tizen-v1.0.zip`)](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases/latest)** from the [Releases page](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases).
    - Extract the `.zip` archive on your computer.
    - Double-click and run `tv-direct-install/deploy-to-tv.bat`.
    - Enter your TV's local IP address when prompted (e.g., `192.168.1.32`).
@@ -170,7 +170,7 @@ For developers using Tizen Device Manager, emulators, or SDB CLI, the release ar
 sdb connect <TV-IP>
 
 # Install the standalone TPK
-sdb install tizen-tpk-installer/QuietHome-TV-1.0.0.tpk
+sdb install tizen-tpk-installer/Opt-quiet-tizen-v1.0.tpk
 ```
 
 #### Option 3: Build from Source
@@ -219,7 +219,7 @@ Inherited from the original project and updated for modern platforms:
 
 ## 🔬 Tested Hardware Comparison
 
-| Item | Original Upstream Baseline | Enhanced Fork (This Repository) |
+| Item | Original Upstream Baseline | Opt-quiet-tizen v1.0 |
 |---|---|---|
 | **Model** | `UN75U8000FFXZA` (2025 U8000F) | `QN55Q7FAAPXPA` (QLED 55") |
 | **Firmware** | `T-KSU2EFAKUC-0090-1300.9` | `T-RSLFUABC-0090-1300.9` |
