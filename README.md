@@ -1,4 +1,4 @@
-# Opt-quiet-tizen v1.0
+# Opt-quiet-tizen v1.0.1
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Original Author](https://img.shields.io/badge/Original%20Author-jss8649-informational.svg)](https://github.com/jss8649/quiet-tizen)
@@ -24,7 +24,7 @@ A lightweight, ad-free, hardware-accelerated native launcher and optimization su
 
 ## 🚀 Why this Fork? (Key Enhancements)
 
-While the original upstream repository documented a targeted case study on a single U8000 model, this fork transforms Quiet Tizen into **Opt-quiet-tizen v1.0**, a **practical, feature-complete daily driver**:
+While the original upstream repository documented a targeted case study on a single U8000 model, this fork transforms Quiet Tizen into **Opt-quiet-tizen v1.0.1**, a **practical, feature-complete daily driver**:
 
 1. **📱 Native Remote-Control Icon Reordering**:
    - Long-press **OK / Enter** for 500 ms on any app icon to enter interactive edit mode.
@@ -37,10 +37,11 @@ While the original upstream repository documented a targeted case study on a sin
    - Driven directly by the native Tizen DALi GPU compositor at a solid **60 FPS** without web DOM layout shifts.
 3. **⚡ Native TV Audio Feedback & Toggle**:
    - Integrated with Samsung's native system audio feedback (libfeedback.so.0), delivering the authentic TV remote navigation click with zero latency and an on/off sound toggle.
-4. **🔧 Launcher Settings & Custom HDMI Tags**:
+4. **🔧 Launcher Preferences & Custom HDMI Tags**:
    - Access via the dedicated **Wrench icon** in the top-right toolbar.
    - Customize HDMI 1, 2, and 3 names and descriptions on the fly, with quick gaming and device presets.
-   - Integrated **5-Language Switcher**: Español, English, Deutsch, Português, and Français.
+   - Integrated **10-Language Switcher**: Español, English, Deutsch, Português, Français, 中文, 日本語, 한국어, हिन्दी, and العربية with dynamic CJK/Arabic/Devanagari font loading.
+   - **Sound & Animation Toggles**: Customize sound effects and switch between fluid Apple TV animations or instantaneous (0 ms) snap navigation.
 5. **📄 Smart Pagination Dots for Apps**:
    - Dynamic page indicator (● ○ ○) in the Apps library when apps span multiple pages, deactivated when single-page to conserve memory.
 6. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:

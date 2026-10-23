@@ -1,38 +1,38 @@
 [
   {
+    "Name": "Crunchyroll",
+    "Id": "OGLLvqej7u.CrunchyrollWebApp",
+    "Asset": "app-icons/crunchyroll.svg",
+    "Description": "Anime streaming",
+    "Fit": "contain",
+    "Background": "#F47521",
+    "Width": 303,
+    "Height": 52
+  },
+  {
     "Name": "Netflix",
     "Id": "org.tizen.netflix-app",
-    "Asset": "placeholders/card-0.svg",
+    "Asset": "app-icons/netflix.svg",
     "Description": "Movies & series",
-    "Fit": "cover",
+    "Fit": "contain",
     "Background": "#FFFFFF",
-    "Width": 640,
-    "Height": 360
+    "Width": 370,
+    "Height": 100
   },
   {
     "Name": "YouTube",
-    "Id": "com.samsung.tv.cobalt-yt",
-    "Asset": "placeholders/card-1.svg",
+    "Id": "9Ur5IzDKqV.TizenYouTube",
+    "Asset": "app-icons/youtube.svg",
     "Description": "Videos",
-    "Fit": "cover",
+    "Fit": "contain",
     "Background": "#FFFFFF",
-    "Width": 640,
-    "Height": 360
-  },
-  {
-    "Name": "Prime Video",
-    "Id": "org.tizen.primevideo",
-    "Asset": "placeholders/card-2.svg",
-    "Description": "Movies & series",
-    "Fit": "cover",
-    "Background": "#0779FF",
-    "Width": 640,
-    "Height": 360
+    "Width": 512,
+    "Height": 114
   },
   {
     "Name": "HBO Max",
     "Id": "5b8c3eb16b.BeamCTVDev",
-    "Asset": "placeholders/card-3.svg",
+    "Asset": "app-icons/hbo-max.png",
     "Description": "Movies & series",
     "Fit": "cover",
     "Background": "#0B121C",
@@ -42,83 +42,62 @@
   {
     "Name": "Disney+",
     "Id": "MCmYXNxgcu.DisneyPlus",
-    "Asset": "placeholders/card-4.svg",
+    "Asset": "app-icons/disney-plus.svg",
     "Description": "Movies & series",
-    "Fit": "cover",
-    "Background": "#023D4A",
-    "Width": 640,
-    "Height": 360
+    "Fit": "contain",
+    "Background": "#021727",
+    "Width": 800,
+    "Height": 445
   },
   {
-    "Name": "Hulu",
-    "Id": "LBUAQX1exg.Hulu",
-    "Asset": "placeholders/card-5.svg",
+    "Name": "Prime Video",
+    "Id": "org.tizen.primevideo",
+    "Asset": "app-icons/prime-video.svg",
     "Description": "Movies & series",
-    "Fit": "cover",
-    "Background": "#000000",
-    "Width": 640,
-    "Height": 360
-  },
-  {
-    "Name": "Spotify",
-    "Id": "rJeHak5zRg.Spotify",
-    "Asset": "placeholders/card-6.svg",
-    "Description": "Music & podcasts",
-    "Fit": "cover",
-    "Background": "#0F1C15",
-    "Width": 640,
-    "Height": 360
+    "Fit": "contain",
+    "Background": "#0779FF",
+    "Width": 846,
+    "Height": 266
   },
   {
     "Name": "Apple TV",
     "Id": "com.samsung.tv.aria-video",
-    "Asset": "placeholders/card-7.svg",
+    "Asset": "app-icons/apple-tv.png",
     "Description": "Movies & series",
     "Fit": "cover",
-    "Background": "#292929",
+    "Background": "#0C1828",
     "Width": 640,
     "Height": 360
   },
   {
-    "Name": "Tubi",
+    "Name": "Tubi TV",
     "Id": "3KA0pm7a7V.TubiTV",
-    "Asset": "placeholders/card-8.svg",
+    "Asset": "app-icons/tubi.png",
     "Description": "Free movies & TV",
     "Fit": "cover",
-    "Background": "#6C21C9",
+    "Background": "#8401DB",
     "Width": 640,
     "Height": 360
   },
   {
-    "Name": "Amazon Luna",
-    "Id": "CmeyUlnhYY.LunaWebApp",
-    "Asset": "placeholders/card-9.svg",
-    "Description": "Cloud gaming",
+    "Name": "Samsung Internet",
+    "Id": "org.tizen.browser",
+    "Asset": "app-icons/browser.png",
+    "Description": "Web Browser",
     "Fit": "cover",
-    "Background": "#9146FF",
+    "Background": "#181A26",
     "Width": 640,
     "Height": 360
   },
   {
-    "Name": "Xbox",
-    "Id": "GHI3a0zMSx.XboxGamePass",
-    "Asset": "placeholders/card-10.svg",
-    "Description": "Cloud gaming",
-    "Fit": "cover",
-    "Background": "#000000",
-    "Width": 640,
-    "Height": 360
-  },
-  {
-    "Name": "Get more apps",
+    "Name": "Galaxy Store",
     "Id": "org.volt.apps",
-    "Asset": "glass-button.svg",
-    "Description": "Open Samsung Apps",
+    "Asset": "app-icons/galaxy-store.png",
+    "Description": "Samsung Galaxy Store",
     "Fit": "cover",
-    "Background": "#EEF0F8",
-    "Width": 100,
-    "Height": 112,
-    "Utility": true
+    "Background": "#0D2446",
+    "Width": 640,
+    "Height": 360
   },
   {
     "Name": "Pluto TV",
@@ -147,6 +126,16 @@
     "Description": "Music streaming",
     "Fit": "cover",
     "Background": "#FE012F",
+    "Width": 640,
+    "Height": 360
+  },
+  {
+    "Name": "Spotify",
+    "Id": "rJeHak5zRg.Spotify",
+    "Asset": "app-icons/spotify.png",
+    "Description": "Music & Podcasts",
+    "Fit": "cover",
+    "Background": "#0F1C15",
     "Width": 640,
     "Height": 360
   }

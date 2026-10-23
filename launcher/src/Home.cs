@@ -57,27 +57,66 @@ public sealed class QuietHome : NUIApplication
  long lastKeyAt;
  bool darkMode=true;
  bool soundEnabled=true;
+ bool animationsEnabled=true;
 
- static readonly string[] LanguageCodes = new[] { "es", "en", "de", "pt", "fr" };
- static readonly string[] LanguageNames = new[] { "Español", "English", "Deutsch", "Português", "Français" };
+ static readonly string[] LanguageCodes = new[] { "es", "en", "de", "pt", "fr", "zh", "ja", "ko", "hi", "ar" };
+ static readonly string[] LanguageNames = new[] { "Español", "English", "Deutsch", "Português", "Français", "中文 (Mandarin)", "日本語", "한국어", "हिन्दी", "العربية" };
  int currentLang = 0;
 
  string[] hdmiNames = new[] { "PlayStation 4 / PC", "Nintendo Switch", "HDMI 3" };
  string[] hdmiDescs = new[] { "Console or PC · HDMI 1", "Game console · HDMI 2", "External device · HDMI 3" };
 
- static readonly (string name, string desc)[] HdmiPresets = new[] {
-  ("PlayStation 4 / PC", "Console or PC"),
-  ("PlayStation 5", "Game console"),
-  ("Nintendo Switch", "Game console"),
-  ("Xbox Series X / S", "Game console"),
-  ("Apple TV 4K", "Streaming device"),
-  ("Gaming PC", "Computer / Steam"),
-  ("Chromecast / Fire TV", "Streaming device"),
-  ("Blu-ray / DVD", "Media player"),
-  ("Cable TV / Box", "Set-top box"),
-  ("HDMI Device", "External device")
+ static readonly (string name, string presetKey)[] HdmiPresets = new[] {
+  ("PlayStation 4 / PC", "preset_console_pc"),
+  ("PlayStation 5", "preset_game_console"),
+  ("Nintendo Switch", "preset_game_console"),
+  ("Xbox Series X / S", "preset_game_console"),
+  ("Apple TV 4K", "preset_streaming"),
+  ("Gaming PC", "preset_pc"),
+  ("Chromecast / Fire TV", "preset_streaming"),
+  ("Blu-ray / DVD", "preset_player"),
+  ("Cable TV / Box", "preset_tv_box"),
+  ("HDMI Device", "preset_device")
  };
  int[] hdmiPresetIndex = new[] { 0, 2, 9 };
+
+ string GetHdmiDesc(int index)
+ {
+  int pIdx = (index >= 0 && index < hdmiPresetIndex.Length) ? hdmiPresetIndex[index] : 0;
+  if(pIdx >= 0 && pIdx < HdmiPresets.Length){
+   string key = HdmiPresets[pIdx].presetKey;
+   return $"{T(key)} · HDMI {index + 1}";
+  }
+  return $"HDMI {index + 1}";
+ }
+
+ CultureInfo GetCurrentCulture()
+ {
+  try {
+   string code = (currentLang >= 0 && currentLang < LanguageCodes.Length) ? LanguageCodes[currentLang] : "es";
+   switch(code) {
+    case "es": return new CultureInfo("es-ES");
+    case "en": return new CultureInfo("en-US");
+    case "de": return new CultureInfo("de-DE");
+    case "pt": return new CultureInfo("pt-PT");
+    case "fr": return new CultureInfo("fr-FR");
+    case "zh": return new CultureInfo("zh-CN");
+    case "ja": return new CultureInfo("ja-JP");
+    case "ko": return new CultureInfo("ko-KR");
+    case "hi": return new CultureInfo("hi-IN");
+    case "ar": return new CultureInfo("ar-SA");
+    default: return CultureInfo.CurrentCulture;
+   }
+  } catch {
+   return CultureInfo.CurrentCulture;
+  }
+ }
+
+ string GetFormattedDate()
+ {
+  var ci = GetCurrentCulture();
+  return DateTime.Now.ToString("ddd, MMM d · h:mm tt", ci);
+ }
 
  // Launcher Settings Modal state
  View modalOverlay;
@@ -88,32 +127,55 @@ public sealed class QuietHome : NUIApplication
 
  static readonly Dictionary<string, string[]> I18N = new Dictionary<string, string[]>
  {
-  ["home"] = new[] { "Inicio", "Home", "Start", "Início", "Accueil" },
-  ["inputs"] = new[] { "Entradas", "Inputs", "Eingänge", "Entradas", "Entrées" },
-  ["apps"] = new[] { "Apps", "Apps", "Apps", "Apps", "Apps" },
-  ["settings"] = new[] { "Ajustes TV", "TV Settings", "TV-Einstellungen", "Configurações TV", "Paramètres TV" },
-  ["quick_settings"] = new[] { "Ajustes Rápidos", "Quick Settings", "Schnelleinstellungen", "Configurações Rápidas", "Paramètres Rapides" },
-  ["your_apps"] = new[] { "Tus Aplicaciones", "Your Apps", "Ihre Apps", "Seus Aplicativos", "Vos Applications" },
-  ["launcher_settings"] = new[] { "Ajustes Lanzador", "Launcher Settings", "Launcher-Einstellungen", "Ajustes do Launcher", "Paramètres du Lanceur" },
-  ["launcher_settings_desc"] = new[] { "Ajustes · Nombres HDMI, idioma y sonido", "Settings · HDMI names, language & sound", "Einstellungen · HDMI-Namen, Sprache & Ton", "Ajustes · Nomes HDMI, idioma e som", "Paramètres · Noms HDMI, langue et son" },
-  ["back_to_input"] = new[] { "Volver a entrada", "Back to input", "Zurück zum Eingang", "Voltar para entrada", "Retour à la source" },
-  ["back_to_home"] = new[] { "Volver al Inicio", "Back to Home", "Zurück zum Start", "Voltar ao Início", "Retour à l'accueil" },
-  ["reorder_hint"] = new[] { "Flechas: mover · OK: fijar · Back: salir", "Arrows: move · OK: set · Back: exit", "Pfeile: bewegen · OK: fixieren · Zurück: beenden", "Setas: mover · OK: fixar · Voltar: sair", "Flèches: déplacer · OK: fixer · Retour: quitter" },
-  ["sound"] = new[] { "Sonido", "Sound", "Ton", "Som", "Son" },
-  ["sound_on"] = new[] { "Activado", "Enabled", "Aktiviert", "Ativado", "Activé" },
-  ["sound_off"] = new[] { "Desactivado", "Disabled", "Deaktiviert", "Desativado", "Désactivé" },
-  ["language"] = new[] { "Idioma", "Language", "Sprache", "Idioma", "Langue" },
-  ["save_close"] = new[] { "Guardar y Cerrar (OK)", "Save & Close (OK)", "Speichern & Schließen (OK)", "Salvar e Fechar (OK)", "Enregistrer et Fermer (OK)" },
-  ["switch_to"] = new[] { "Cambiar a", "Switch to", "Wechseln zu", "Mudar para", "Basculer vers" },
-  ["lets_play"] = new[] { "A jugar.", "Let's play.", "Lass uns spielen.", "Vamos jogar.", "C'est parti." },
-  ["volume"] = new[] { "Volumen", "Volume", "Lautstärke", "Volume", "Volume" },
-  ["brightness"] = new[] { "Brillo", "Brightness", "Helligkeit", "Brilho", "Luminosité" },
-  ["game_mode"] = new[] { "Modo Juego", "Game Mode", "Spielmodus", "Modo Jogo", "Mode Jeu" },
-  ["sleep_timer"] = new[] { "Temporizador", "Sleep Timer", "Schlummerfunktion", "Temporizador", "Minuteur" },
-  ["controllers"] = new[] { "Mandos", "Controllers", "Controller", "Controles", "Manettes" },
-  ["network"] = new[] { "Red", "Network", "Netzwerk", "Rede", "Réseau" },
-  ["advanced"] = new[] { "Ajustes Samsung", "Advanced", "Erweitert", "Avançado", "Avancé" },
-  ["modal_hint"] = new[] { "◀ ▶ Cambiar opción · OK o Back para guardar", "◀ ▶ Change option · OK or Back to save", "◀ ▶ Option ändern · OK oder Zurück zum Speichern", "◀ ▶ Mudar opção · OK ou Voltar para salvar", "◀ ▶ Changer d'option · OK ou Retour pour enregistrer" }
+  ["home"] = new[] { "Inicio", "Home", "Start", "Início", "Accueil", "主页", "ホーム", "홈", "होम", "الرئيسية" },
+  ["inputs"] = new[] { "Entradas", "Inputs", "Eingänge", "Entradas", "Entrées", "输入", "入力", "입력", "इनपुट", "المداخل" },
+  ["apps"] = new[] { "Apps", "Apps", "Apps", "Apps", "Apps", "应用", "アプリ", "앱", "ऐप्स", "التطبيقات" },
+  ["settings"] = new[] { "Ajustes TV", "TV Settings", "TV-Einstellungen", "Configurações TV", "Paramètres TV", "电视设置", "テレビ設定", "TV 설정", "टीवी सेटिंग्स", "إعدادات التلفاز" },
+  ["quick_settings"] = new[] { "Ajustes Rápidos", "Quick Settings", "Schnelleinstellungen", "Configurações Rápidas", "Paramètres Rapides", "快捷设置", "クイック設定", "빠른 설정", "त्वरित सेटिंग्स", "الإعدادات السريعة" },
+  ["your_apps"] = new[] { "Tus Aplicaciones", "Your Apps", "Ihre Apps", "Seus Aplicativos", "Vos Applications", "你的应用", "マイアプリ", "내 앱", "आपके ऐप्स", "تطبيقاتك" },
+  ["launcher_settings"] = new[] { "Preferencias del launcher", "Launcher Preferences", "Launcher-Einstellungen", "Preferências do launcher", "Préférences du lanceur", "启动器偏好设置", "ランチャー設定", "런처 환경설정", "लॉन्चर प्राथमिकताएं", "تفضيلات المشغل" },
+  ["launcher_settings_desc"] = new[] { "Ajustes · Nombres HDMI, idioma y sonido", "Settings · HDMI names, language & sound", "Einstellungen · HDMI-Namen, Sprache & Ton", "Ajustes · Nomes HDMI, idioma e som", "Paramètres · Noms HDMI, langue et son", "设置 · HDMI名称、语言与声音", "設定 · HDMI名、言語、サウンド", "설정 · HDMI 이름, 언어 및 사운드", "सेटिंग्स · HDMI नाम, भाषा और ध्वनि", "الإعدادات · أسماء HDMI واللغة والصوت" },
+  ["back_to_input"] = new[] { "Volver a entrada", "Back to input", "Zurück zum Eingang", "Voltar para entrada", "Retour à la source", "返回输入", "入力に戻る", "입력으로 돌아가기", "इनपुट पर वापस जाएं", "العودة إلى المدخل" },
+  ["back_to_home"] = new[] { "Volver al Inicio", "Back to Home", "Zurück zum Start", "Voltar ao Início", "Retour à l'accueil", "返回主页", "ホームに戻る", "홈으로 돌아가기", "होम पर वापस जाएं", "العودة إلى الرئيسية" },
+  ["reorder_hint"] = new[] { "Flechas: mover · OK: fijar · Back: salir", "Arrows: move · OK: set · Back: exit", "Pfeile: bewegen · OK: fixieren · Zurück: beenden", "Setas: mover · OK: fixar · Voltar: sair", "Flèches: déplacer · OK: fixer · Retour: quitter", "方向键: 移动 · OK: 确定 · Back: 退出", "矢印: 移動 · OK: 決定 · Back: 終了", "화살표: 이동 · OK: 고정 · Back: 나가기", "तीर: ले जाएं · ठीक: सेट · वापस: बाहर", "الأسهم: تحريك · موافق: تثبيت · رجوع: خروج" },
+  ["sound"] = new[] { "Sonido", "Sound", "Ton", "Som", "Son", "声音", "サウンド", "소리", "ध्वनि", "الصوت" },
+  ["sound_on"] = new[] { "Activado", "Enabled", "Aktiviert", "Ativado", "Activé", "已开启", "オン", "켜짐", "चालू", "مفعل" },
+  ["sound_off"] = new[] { "Desactivado", "Disabled", "Deaktiviert", "Desativado", "Désactivé", "已关闭", "オフ", "꺼짐", "बंद", "معطل" },
+  ["animations"] = new[] { "Animaciones", "Animations", "Animationen", "Animações", "Animations", "动效", "アニメーション", "애니메이션", "एनिमेशन", "الرسوم المتحركة" },
+  ["language"] = new[] { "Idioma", "Language", "Sprache", "Idioma", "Langue", "语言", "言語", "언어", "भाषा", "اللغة" },
+  ["save_close"] = new[] { "Guardar y Cerrar (OK)", "Save & Close (OK)", "Speichern & Schließen (OK)", "Salvar e Fechar (OK)", "Enregistrer et Fermer (OK)", "保存并关闭 (OK)", "保存して閉じる (OK)", "저장 및 닫기 (OK)", "सहेजें और बंद करें (OK)", "حفظ وإغلاق (OK)" },
+  ["switch_to"] = new[] { "Cambiar a", "Switch to", "Wechseln zu", "Mudar para", "Basculer vers", "切换至", "切り替え:", "전환:", "बदलें:", "التبديل إلى" },
+  ["lets_play"] = new[] { "A jugar.", "Let's play.", "Lass uns spielen.", "Vamos jogar.", "C'est parti.", "开始游玩。", "プレイしよう。", "플레이하기.", "खेल शुरू करें।", "لنلعب." },
+  ["volume"] = new[] { "Volumen", "Volume", "Lautstärke", "Volume", "Volume", "音量", "音量", "음량", "आवाज़", "مستوى الصوت" },
+  ["brightness"] = new[] { "Brillo", "Brightness", "Helligkeit", "Brilho", "Luminosité", "亮度", "明るさ", "밝기", "चमक", "السطوع" },
+  ["game_mode"] = new[] { "Modo Juego", "Game Mode", "Spielmodus", "Modo Jogo", "Mode Jeu", "游戏模式", "ゲームモード", "게임 모드", "गेम मोड", "وضع الألعاب" },
+  ["sleep_timer"] = new[] { "Temporizador", "Sleep Timer", "Schlummerfunktion", "Temporizador", "Minuteur", "睡眠定时器", "スリープタイマー", "취침 예약", "स्लीप टाइमर", "مؤقت النوم" },
+  ["controllers"] = new[] { "Mandos", "Controllers", "Controller", "Controles", "Manettes", "手柄控制器", "コントローラー", "컨트롤러", "कंट्रोलर्स", "أجهزة التحكم" },
+  ["network"] = new[] { "Red", "Network", "Netzwerk", "Rede", "Réseau", "网络", "ネットワーク", "네트워크", "नेटवर्क", "الشبكة" },
+  ["advanced"] = new[] { "Ajustes Samsung", "Advanced", "Erweitert", "Avançado", "Avancé", "三星设置", "詳細設定", "고급 설정", "उन्नत सेटिंग्स", "إعدادات متقدمة" },
+  ["modal_hint"] = new[] { "Flechas para cambiar | Botón de atrás o \"OK\" para guardar", "Arrows to change | Back button or \"OK\" to save", "Pfeile zum Ändern | Zurück-Taste oder „OK“ zum Speichern", "Setas para mudar | Botão Voltar ou \"OK\" para salvar", "Flèches pour changer | Bouton Retour ou « OK » pour enregistrer", "方向键更改 | 返回键或 \"OK\" 保存", "矢印キーで変更 | 戻るまたは「OK」で保存", "화살표로 변경 | 뒤로가기 또는 \"OK\"로 저장", "बदलने के लिए तीर | सहेजने के लिए वापस या \"OK\"", "الأسهم للتغيير | زر الرجوع أو \"OK\" للحفظ" },
+  ["volume_desc"] = new[] { "Seleccionar · Flechas para ajustar", "Select · Left / Right to adjust", "Auswählen · Links / Rechts anpassen", "Selecionar · Esquerda / Direita ajustar", "Sélectionner · Gauche / Droite ajuster", "选择 · 左右键调节", "選択 · 左右で調整", "선택 · 좌우로 조절", "चुनें · समायोजित करने के लिए बाएं/दाएं", "اختر · يمين / يسار للضبط" },
+  ["brightness_desc"] = new[] { "Seleccionar · Flechas para ajustar", "Select · Left / Right to adjust", "Auswählen · Links / Rechts anpassen", "Selecionar · Esquerda / Direita ajustar", "Sélectionner · Gauche / Droite ajuster", "选择 · 左右键调节", "選択 · 左右で調整", "선택 · 좌우로 조절", "चुनें · समायोजित करने के लिए बाएं/दाएं", "اختر · يمين / يسار للضبط" },
+  ["game_mode_desc"] = new[] { "Seleccionar para activar o desactivar", "Select to switch on or off", "Auswählen zum Ein- oder Ausschalten", "Selecionar para ligar ou desligar", "Sélectionner pour activer ou désactiver", "选择以开启或关闭", "選択してオン/オフ切り替え", "선택하여 켜기 또는 끄기", "चालू या बंद करने के लिए चुनें", "اختر للتشغيل أو الإيقاف" },
+  ["sleep_timer_desc"] = new[] { "Seleccionar para cambiar temporizador", "Select to change the timer", "Auswählen zum Ändern des Timers", "Selecionar para alterar o temporizador", "Sélectionner pour modifier le minuteur", "选择以更改定时器", "選択してタイマーを変更", "선택하여 타이머 변경", "टाइमर बदलने के लिए चुनें", "اختر لتغيير المؤقت" },
+  ["mute_desc"] = new[] { "Seleccionar para silenciar o activar", "Select to mute or unmute", "Auswählen zum Stummschalten", "Selecionar para ativar ou desativar som", "Sélectionner pour couper ou activer le son", "选择以静音或开启声音", "選択して消音または解除", "선택하여 음소거 또는 해제", "म्यूट या अनम्यूट करने के लिए चुनें", "اختر للكتم أو إلغاء الكتم" },
+  ["controllers_desc"] = new[] { "DualSense · mantén pulsado PS + Create", "DualSense · hold PS + Create", "DualSense · PS + Create gedrückt halten", "DualSense · segure PS + Create", "DualSense · maintenir PS + Create", "DualSense · 按住 PS + Create 键", "DualSense · PS + Create を長押し", "DualSense · PS + 만들기 버튼 길게 누름", "DualSense · PS + Create दबाकर रखें", "DualSense · اضغط مطولاً على PS + Create" },
+  ["network_desc"] = new[] { "Configuración de red y Wi-Fi", "Wi-Fi and connection setup", "WLAN- und Netzwerkeinrichtung", "Configuração de Wi-Fi e rede", "Configuration Wi-Fi et réseau", "Wi-Fi 与网络设置", "Wi-Fi およびネットワーク設定", "Wi-Fi 및 네트워크 설정", "Wi-Fi और नेटवर्क सेटअप", "إعدادات Wi-Fi والشبكة" },
+  ["advanced_desc"] = new[] { "Abrir ajustes completos de Samsung", "Open Samsung's full settings", "Vollständige Samsung-Einstellungen", "Abrir configurações completas da Samsung", "Ouvrir tous les paramètres Samsung", "打开三星完整系统设置", "Samsungの全設定を開く", "Samsung 전체 설정 열기", "सैमसंग की पूरी सेटिंग्स खोलें", "فتح إعدادات سامسونج الكاملة" },
+  ["pair_controller"] = new[] { "Vincular mando", "Pair controller", "Controller koppeln", "Emparelhar controle", "Jumeler la manette", "配对手柄", "コントローラー接続", "컨트롤러 페어링", "कंट्रोलर जोड़ें", "إقران وحدة التحكم" },
+  ["connections"] = new[] { "Conexiones", "Connections", "Verbindungen", "Conexões", "Connexions", "网络连接", "接続設定", "연결", "कनेक्शन", "الاتصالات" },
+  ["all_settings"] = new[] { "Todos los ajustes", "All settings", "Alle Einstellungen", "Todas as configurações", "Tous les paramètres", "全部设置", "すべての設定", "모든 설정", "सभी सेटिंग्स", "كافة الإعدادات" },
+  ["unavailable"] = new[] { "No disponible", "Unavailable", "Nicht verfügbar", "Indisponível", "Indisponible", "不可用", "利用不可", "사용 불가", "अनुपलब्ध", "غير متاح" },
+  ["on"] = new[] { "Activado", "On", "Ein", "Ligado", "Activé", "开启", "オン", "켜짐", "चालू", "تشغيل" },
+  ["off"] = new[] { "Desactivado", "Off", "Aus", "Desligado", "Désactivé", "关闭", "オフ", "꺼짐", "बंद", "إيقاف" },
+  ["muted"] = new[] { "Silenciado", "Muted", "Stumm", "Mudo", "Muet", "已静音", "消音中", "음소거", "म्यूट", "مكتوم" },
+  ["preset_console_pc"] = new[] { "Consola o PC", "Console or PC", "Konsole oder PC", "Console ou PC", "Console ou PC", "主机或电脑", "ゲーム機 / PC", "콘솔 또는 PC", "कंसोल या पीसी", "منصة ألعاب أو كمبيوتر" },
+  ["preset_game_console"] = new[] { "Consola de videojuegos", "Game console", "Spielkonsole", "Console de videogame", "Console de jeux", "游戏主机", "ゲーム機", "게임 콘솔", "गेम कंसोल", "منصة ألعاب" },
+  ["preset_streaming"] = new[] { "Dispositivo de streaming", "Streaming device", "Streaming-Gerät", "Dispositivo de streaming", "Appareil de streaming", "流媒体设备", "ストリーミング機器", "스트리밍 기기", "स्ट्रीमिंग डिवाइस", "جهاز بث" },
+  ["preset_pc"] = new[] { "Ordenador / Steam", "Computer / Steam", "Computer / Steam", "Computador / Steam", "Ordinateur / Steam", "电脑 / Steam", "PC / Steam", "컴퓨터 / Steam", "कंप्यूटर / स्टीम", "كمبيوتر / ستيم" },
+  ["preset_player"] = new[] { "Reproductor multimedia", "Media player", "Medienplayer", "Reprodutor de mídia", "Lecteur multimédia", "多媒体播放器", "メディアプレーヤー", "미디어 플레이어", "मीडिया प्लेयर", "مشغل وسائط" },
+  ["preset_tv_box"] = new[] { "Decodificador de TV", "Set-top box", "TV-Receiver", "Conversor / TV Box", "Décodeur TV", "机顶盒", "セットトップボックス", "셋톱박스", "सेट-टॉप बॉक्स", "جهاز استقبال" },
+  ["preset_device"] = new[] { "Dispositivo externo", "External device", "Externes Gerät", "Dispositivo externo", "Périphérique externe", "外部设备", "外部機器", "외부 기기", "बाहरी डिवाइस", "جهاز خارجي" }
  };
 
  string T(string key)
@@ -144,8 +206,7 @@ public sealed class QuietHome : NUIApplication
  [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_set_master_volume(int value);
  [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_get_master_mute(out int value);
  [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_set_master_mute(int value);
- [DllImport("libfeedback.so.0")] static extern int feedback_initialize();
- [DllImport("libfeedback.so.0")] static extern int feedback_play_type(int type, int pattern);
+ [DllImport("libmmfkeysound.so.0")] static extern int mm_sound_play_keysound(string filename, int type);
  [DllImport("libsettings-api.so")] static extern bool CSharpGetItemValue(string id,out string name,out string value);
  [DllImport("libsettings-api.so")] static extern bool CSharpSetItemValue(string id,string value);
  [DllImport("libsettings-api.so")] static extern bool CSharpGetItemEnable(string id,out bool enabled);
@@ -154,8 +215,10 @@ public sealed class QuietHome : NUIApplication
  protected override void OnCreate()
  {
   base.OnCreate();
-  try{feedback_initialize();}catch{}
-  try{fontLoaded=FontClient.Instance.AddCustomFontDirectory(Root+"fonts");}catch{fontLoaded=false;}
+  try{
+   fontLoaded=FontClient.Instance.AddCustomFontDirectory(Root+"fonts");
+   FontClient.Instance.AddCustomFontDirectory("/usr/share/fonts");
+  }catch{fontLoaded=false;}
   LoadConfig();
   try{
    string appsPath=Root+"apps.json";
@@ -173,7 +236,7 @@ public sealed class QuietHome : NUIApplication
   PreloadArtwork();
   RefreshSource();selected=SourceIndex();BuildPage();
   clockTimer=new Tizen.NUI.Timer(30000);
-  clockTimer.Tick+=(s,e)=>{if(clock!=null)clock.Text=DateTime.Now.ToString("ddd, MMM d · h:mm tt");return true;};clockTimer.Start();WriteState("created");
+  clockTimer.Tick+=(s,e)=>{if(clock!=null)clock.Text=GetFormattedDate();return true;};clockTimer.Start();WriteState("created");
  }
 
  void LoadConfig()
@@ -189,6 +252,15 @@ public sealed class QuietHome : NUIApplication
     }
     string snd = ExtractJsonValue(json, "sound");
     if (!string.IsNullOrEmpty(snd)) soundEnabled = snd == "true" || snd == "1";
+    string anim = ExtractJsonValue(json, "animations");
+    if (!string.IsNullOrEmpty(anim)) animationsEnabled = anim == "true" || anim == "1";
+    string p0 = ExtractJsonValue(json, "preset0");
+    if (int.TryParse(p0, out var v0) && v0 >= 0 && v0 < HdmiPresets.Length) hdmiPresetIndex[0] = v0;
+    string p1 = ExtractJsonValue(json, "preset1");
+    if (int.TryParse(p1, out var v1) && v1 >= 0 && v1 < HdmiPresets.Length) hdmiPresetIndex[1] = v1;
+    string p2 = ExtractJsonValue(json, "preset2");
+    if (int.TryParse(p2, out var v2) && v2 >= 0 && v2 < HdmiPresets.Length) hdmiPresetIndex[2] = v2;
+    for(int h=0; h<3; h++) hdmiDescs[h] = GetHdmiDesc(h);
     string h1n = ExtractJsonValue(json, "hdmi1_name"); if (!string.IsNullOrEmpty(h1n)) hdmiNames[0] = h1n;
     string h1d = ExtractJsonValue(json, "hdmi1_desc"); if (!string.IsNullOrEmpty(h1d)) hdmiDescs[0] = h1d;
     string h2n = ExtractJsonValue(json, "hdmi2_name"); if (!string.IsNullOrEmpty(h2n)) hdmiNames[1] = h2n;
@@ -205,6 +277,10 @@ public sealed class QuietHome : NUIApplication
    string json = "{\n" +
     $"  \"lang\": \"{LanguageCodes[currentLang]}\",\n" +
     $"  \"sound\": {(soundEnabled ? "true" : "false")},\n" +
+    $"  \"animations\": {(animationsEnabled ? "true" : "false")},\n" +
+    $"  \"preset0\": {hdmiPresetIndex[0]},\n" +
+    $"  \"preset1\": {hdmiPresetIndex[1]},\n" +
+    $"  \"preset2\": {hdmiPresetIndex[2]},\n" +
     $"  \"hdmi1_name\": \"{EscapeJson(hdmiNames[0])}\",\n" +
     $"  \"hdmi1_desc\": \"{EscapeJson(hdmiDescs[0])}\",\n" +
     $"  \"hdmi2_name\": \"{EscapeJson(hdmiNames[1])}\",\n" +
@@ -321,6 +397,7 @@ public sealed class QuietHome : NUIApplication
 
  void BuildPage(bool animate=false)
  {
+  if(!animationsEnabled) animate=false;
   var stopwatch=Stopwatch.StartNew();
   if(focusAnimation!=null){focusAnimation.Stop();focusAnimation.Dispose();focusAnimation=null;}
   if(pageAnimation!=null){pageAnimation.Stop();pageAnimation.Dispose();pageAnimation=null;}
@@ -332,9 +409,20 @@ public sealed class QuietHome : NUIApplication
   
   tabs=new TextLabel[3];
   string[] nav={T("inputs"), T("apps"), T("settings")};
-  int[] tx={54,221,366};int[] tw={153,131,182};
-  for(int i=0;i<3;i++){tabs[i]=TextWindow(nav[i],tx[i],158,tw[i],68,30,muted);tabs[i].HorizontalAlignment=HorizontalAlignment.Center;}
-  clock=TextWindow(DateTime.Now.ToString("ddd, MMM d · h:mm tt"),1200,170,640,45,24,muted);clock.HorizontalAlignment=HorizontalAlignment.End;
+  int curTabX = 54;
+  for(int i=0; i<3; i++){
+   int charCount = nav[i].Length;
+   bool isWide = false;
+   foreach(char c in nav[i]){
+    if(c >= 0x0600) { isWide = true; break; }
+   }
+   int charW = isWide ? 26 : 18;
+   int tabW = Math.Max(120, charCount * charW + 52);
+   tabs[i] = TextWindow(nav[i], curTabX, 158, tabW, 68, 30, muted);
+   tabs[i].HorizontalAlignment = HorizontalAlignment.Center;
+   curTabX += tabW + 16;
+  }
+  clock=TextWindow(GetFormattedDate(),1180,170,660,45,24,muted);clock.HorizontalAlignment=HorizontalAlignment.End;
 
   pageContainer=new View{
    Size2D=new Size2D(1920,1080),
@@ -349,12 +437,12 @@ public sealed class QuietHome : NUIApplication
   var title=TextWindow(page==0?T("home"):page==1?T("your_apps"):T("quick_settings"),76,55,1350,100,76,ink,"Display");
 
   if(page==0){
-   var hero=Feature(hdmiNames[0],"hdmi:13",hdmiDescs[0],"feature-ps4.png",80,262,1040,442,"hero");
+   var hero=Feature(hdmiNames[0],"hdmi:13",GetHdmiDesc(0),"feature-ps4.png",80,262,1040,442,"hero");
    hero.Card.Add(Label(hdmiNames[0].ToUpperInvariant(),44,52,550,40,24,new Color(.86f,.91f,1,1),"Semibold"));
    hero.Card.Add(Label(T("lets_play"),40,124,560,100,72,white,"Display"));
    hero.Card.Add(Label($"{T("switch_to")} HDMI 1",46,246,440,48,30,new Color(.88f,.93f,1,1)));
-   Feature(hdmiNames[1],"hdmi:14",hdmiDescs[1],"feature-switch.png",1160,262,320,442,"portrait");
-   Feature(hdmiNames[2],"hdmi:15",hdmiDescs[2],"feature-hdmi.svg",1520,262,320,442,"portrait");
+   Feature(hdmiNames[1],"hdmi:14",GetHdmiDesc(1),"feature-switch.png",1160,262,320,442,"portrait");
+   Feature(hdmiNames[2],"hdmi:15",GetHdmiDesc(2),"feature-hdmi.svg",1520,262,320,442,"portrait");
    Add(new ImageView{ResourceUrl=Root+(darkMode?"glass-shelf-dark.svg":"glass-shelf.svg"),Position2D=new Position2D(0,784),Size2D=new Size2D(1920,280)});
    Dock("Netflix","app:org.tizen.netflix-app","netflix",0);
    Dock("YouTube","app:9Ur5IzDKqV.TizenYouTube","youtube",1);
@@ -366,14 +454,14 @@ public sealed class QuietHome : NUIApplication
    BuildLibrary();
   }else{
    RefreshSettings();
-   SettingsTile(T("volume"),"volume","Select · Left / Right to adjust","volume",0,0);
-   SettingsTile(T("brightness"),"brightness","Select · Left / Right to adjust","brightness",1,0);
-   SettingsTile(T("game_mode"),"game-mode","Select to switch on or off","game",2,0);
-   SettingsTile(T("sleep_timer"),"sleeptimer","Select to change the timer","sleep",3,0);
-   SettingsTile(T("sound"),"mute","Select to mute or unmute","mute",0,1);
-   SettingsTile(T("controllers"),"controllers","DualSense · hold PS + Create","controller",1,1);
-   SettingsTile(T("network"),"network","Wi-Fi and connection setup","network",2,1);
-   SettingsTile(T("advanced"),"app:org.tizen.menu","Open Samsung's full settings","settings",3,1);
+   SettingsTile(T("volume"),"volume",T("volume_desc"),"volume",0,0);
+   SettingsTile(T("brightness"),"brightness",T("brightness_desc"),"brightness",1,0);
+   SettingsTile(T("game_mode"),"game-mode",T("game_mode_desc"),"game",2,0);
+   SettingsTile(T("sleep_timer"),"sleeptimer",T("sleep_timer_desc"),"sleep",3,0);
+   SettingsTile(T("sound"),"mute",T("mute_desc"),"mute",0,1);
+   SettingsTile(T("controllers"),"controllers",T("controllers_desc"),"controller",1,1);
+   SettingsTile(T("network"),"network",T("network_desc"),"network",2,1);
+   SettingsTile(T("advanced"),"app:org.tizen.menu",T("advanced_desc"),"settings",3,1);
   }
 
   var animContainer=pageContainer;
@@ -453,7 +541,12 @@ public sealed class QuietHome : NUIApplication
  void PlayTick()
  {
   if(!soundEnabled)return;
-  try{feedback_play_type(0,1);}catch{}
+  try{
+   if(File.Exists("/usr/share/feedback/sound/operation/move.wav"))
+    mm_sound_play_keysound("/usr/share/feedback/sound/operation/move.wav", 0);
+   else if(File.Exists(Root+"click.wav"))
+    mm_sound_play_keysound(Root+"click.wav", 0);
+  }catch{}
  }
 
  Color HexColor(string hex)
@@ -601,30 +694,29 @@ public sealed class QuietHome : NUIApplication
  void SettingsTile(string title,string action,string description,string icon,int col,int row)
  {
   int x=80+col*450,y=262+row*332,w=410,h=286;
-  var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-settings.svg",Position2D=new Position2D(x-24,y-14),Size2D=new Size2D(w+48,h+64)});
-  var card=Panel(x+w/2,y+h/2,w,h,darkMode?new Color(0.12f,0.15f,0.22f,1):new Color(0.92f,0.93f,0.95f,1),24);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
-  if(!quickCache.TryGetValue(icon,out var iconImg)){
-   iconImg=new ImageView{ResourceUrl=Root+"quick-"+icon+".png",Position2D=new Position2D(32,32),Size2D=new Size2D(56,56),FittingMode=FittingModeType.ScaleToFill,SamplingMode=SamplingModeType.BoxThenLanczos};
-   quickCache[icon]=iconImg;
+  var card=Panel(x+w/2,y+h/2,w,h,new Color(0,0,0,0),24);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
+  if(!quickCache.TryGetValue(icon,out var tileImg)){
+   tileImg=new ImageView{ResourceUrl=Root+"quick-"+icon+".png",Size2D=new Size2D(w,h),DesiredWidth=820,DesiredHeight=572,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(24,24,24,24)};
+   quickCache[icon]=tileImg;
   }else{
-   if(iconImg.GetParent()!=null)iconImg.GetParent().Remove(iconImg);
+   if(tileImg.GetParent()!=null)tileImg.GetParent().Remove(tileImg);
   }
-  card.Add(iconImg);
-  card.Add(Label(title,32,108,336,40,28,ink,"Semibold"));
-  var valLabel=Label(SettingDisplay(action),32,154,336,36,22,muted);card.Add(valLabel);
-  var descLabel=Label(description,32,204,336,32,18,muted);card.Add(descLabel);
-  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(26,26,26,26),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  card.Add(tileImg);
+  card.Add(Label(title,26,25,348,42,29,white,"Semibold"));
+  var valLabel=Label(SettingDisplay(action),26,146,358,56,38,white,"Display");card.Add(valLabel);
+  var descLabel=Label(description,26,226,370,34,20,new Color(.95f,.96f,1,1));card.Add(descLabel);
+  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(24,24,24,24),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
-  slots.Add(new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=valLabel,Desc=descLabel,Name=title,Action=action,Description=description,Row=row,X=x,Y=y,W=w,H=h});
+  slots.Add(new Slot{Card=card,Shadow=null,FocusRing=ring,Label=valLabel,Desc=descLabel,Name=title,Action=action,Description=description,Row=row,X=x,Y=y,W=w,H=h});
  }
 
  string SettingDisplay(string action)
  {
-  if(action=="volume")return currentVolume<0?"Unavailable":currentVolume+"%";
-  if(action=="brightness")return CanEdit("brightness")?SettingValue("brightness"):"Unavailable";
-  if(action=="game-mode")return CanEdit("game-mode")?(SettingValue("game-mode")=="1"?"On":"Off"):"Unavailable";
-  if(action=="sleeptimer")return CanEdit("sleeptimer")?(SettingValue("sleeptimer")=="0"?"Off":SettingValue("sleeptimer")+" min"):"Unavailable";
-  if(action=="mute")return currentMute<0?"Unavailable":currentMute==1?"Muted":"Sound on";
+  if(action=="volume")return currentVolume<0?T("unavailable"):currentVolume+"%";
+  if(action=="brightness")return CanEdit("brightness")?SettingValue("brightness"):T("unavailable");
+  if(action=="game-mode")return CanEdit("game-mode")?(SettingValue("game-mode")=="1"?T("on"):T("off")):T("unavailable");
+  if(action=="sleeptimer")return CanEdit("sleeptimer")?(SettingValue("sleeptimer")=="0"?T("off"):SettingValue("sleeptimer")+" min"):T("unavailable");
+  if(action=="mute")return currentMute<0?T("unavailable"):currentMute==1?T("muted"):T("sound_on");
   return "";
  }
 
@@ -653,6 +745,7 @@ public sealed class QuietHome : NUIApplication
 
  void UpdateFocus(bool animate=true)
  {
+  if(!animationsEnabled) animate=false;
   if(focusAnimation!=null){focusAnimation.Stop();focusAnimation.Dispose();focusAnimation=null;}
   if(animate){focusAnimation=new Animation(180);PlayTick();}
   for(int i=0;i<3;i++){
@@ -707,8 +800,8 @@ public sealed class QuietHome : NUIApplication
   lastFocusedSlot = curFocused;
   if(focusAnimation!=null)focusAnimation.Play();
 
-  if(area==3&&curFocused>=0&&curFocused<slots.Count){
-   toolbarHint.Text=slots[curFocused].Description;
+  if(area==3){
+   toolbarHint.Text="";
    detail.Text="";
   }else if(area==0){
    toolbarHint.Text="";
@@ -722,10 +815,10 @@ public sealed class QuietHome : NUIApplication
    slots[1].Label.Text=SettingDisplay("brightness");
    slots[2].Label.Text=SettingDisplay("game-mode");
    slots[3].Label.Text=SettingDisplay("sleeptimer");
-   slots[4].Label.Text=currentMute<0?"Unavailable":currentMute==1?"Muted":"Sound on";
-   slots[5].Label.Text="Pair controller";
-   slots[6].Label.Text="Connections";
-   slots[7].Label.Text="All settings";
+   slots[4].Label.Text=currentMute<0?T("unavailable"):currentMute==1?T("muted"):T("sound_on");
+   slots[5].Label.Text=T("pair_controller");
+   slots[6].Label.Text=T("connections");
+   slots[7].Label.Text=T("all_settings");
   }
   if(reordering&&curFocused>=0&&curFocused<slots.Count)notice.Text=T("reorder_hint");
   if(editing!="")detail.Text="Left / Right to adjust "+editing+" · Select or Back to finish";
@@ -952,8 +1045,8 @@ public sealed class QuietHome : NUIApplication
   };
 
   var box=new View{
-   Position2D=new Position2D(410,140),
-   Size2D=new Size2D(1100,790),
+   Position2D=new Position2D(410,105),
+   Size2D=new Size2D(1100,870),
    BackgroundColor=darkMode?new Color(0.12f,0.15f,0.22f,0.98f):new Color(0.96f,0.96f,0.98f,0.98f),
    CornerRadius=new Vector4(28,28,28,28),
    BorderlineWidth=3,
@@ -978,9 +1071,9 @@ public sealed class QuietHome : NUIApplication
    TextColor=muted
   });
 
-  modalRowViews=new View[6];
-  modalRowLabels=new TextLabel[6];
-  modalRowValues=new TextLabel[6];
+  modalRowViews=new View[7];
+  modalRowLabels=new TextLabel[7];
+  modalRowValues=new TextLabel[7];
 
   string[] rowTitles = new[] {
    "HDMI 1",
@@ -988,14 +1081,15 @@ public sealed class QuietHome : NUIApplication
    "HDMI 3",
    T("language"),
    T("sound"),
+   T("animations"),
    T("save_close")
   };
 
-  for(int i=0;i<6;i++){
-   int y=148+i*98;
+  for(int i=0;i<7;i++){
+   int y=142+i*94;
    var rView=new View{
     Position2D=new Position2D(40,y),
-    Size2D=new Size2D(1020,84),
+    Size2D=new Size2D(1020,80),
     BackgroundColor=i==0?(darkMode?new Color(1,1,1,0.12f):new Color(0,0,0,0.08f)):new Color(0,0,0,0),
     CornerRadius=new Vector4(18,18,18,18),
     BorderlineWidth=i==0?2:0,
@@ -1006,9 +1100,9 @@ public sealed class QuietHome : NUIApplication
 
    var lbl=new TextLabel{
     Text=rowTitles[i],
-    Position2D=new Position2D(24,18),
+    Position2D=new Position2D(24,16),
     Size2D=new Size2D(340,48),
-    PixelSize=26,
+    PixelSize=25,
     FontFamily="Quiet Inter Semibold",
     TextColor=ink,
     VerticalAlignment=VerticalAlignment.Center
@@ -1018,9 +1112,9 @@ public sealed class QuietHome : NUIApplication
 
    var val=new TextLabel{
     Text=GetModalRowValueText(i),
-    Position2D=new Position2D(380,18),
+    Position2D=new Position2D(380,16),
     Size2D=new Size2D(616,48),
-    PixelSize=24,
+    PixelSize=23,
     FontFamily="Quiet Inter Medium",
     TextColor=accent,
     HorizontalAlignment=HorizontalAlignment.End,
@@ -1038,23 +1132,26 @@ public sealed class QuietHome : NUIApplication
  string GetModalRowValueText(int row)
  {
   if(row>=0&&row<=2){
-   return $"[ ◀  {hdmiNames[row]}  ▶ ]";
+   return $"◀  {hdmiNames[row]}  ▶";
   }
   if(row==3){
-   return $"[ ◀  {LanguageNames[currentLang]}  ▶ ]";
+   return $"◀  {LanguageNames[currentLang]}  ▶";
   }
   if(row==4){
-   return $"[ ◀  {(soundEnabled ? T("sound_on") : T("sound_off"))}  ▶ ]";
+   return $"◀  {(soundEnabled ? T("sound_on") : T("sound_off"))}  ▶";
   }
   if(row==5){
-   return "[ OK ]";
+   return $"◀  {(animationsEnabled ? T("sound_on") : T("sound_off"))}  ▶";
+  }
+  if(row==6){
+   return "OK";
   }
   return "";
  }
 
  void UpdateModalRowHighlights()
  {
-  for(int i=0;i<6;i++){
+  for(int i=0;i<7;i++){
    bool isSel = i == modalRow;
    modalRowViews[i].BackgroundColor = isSel ? (darkMode?new Color(1,1,1,0.14f):new Color(0,0,0,0.08f)) : new Color(0,0,0,0);
    modalRowViews[i].BorderlineWidth = isSel ? 3 : 0;
@@ -1072,12 +1169,12 @@ public sealed class QuietHome : NUIApplication
    return;
   }
   if(k=="Up"){
-   modalRow=(modalRow-1+6)%6;
+   modalRow=(modalRow-1+7)%7;
    UpdateModalRowHighlights();
    return;
   }
   if(k=="Down"){
-   modalRow=(modalRow+1)%6;
+   modalRow=(modalRow+1)%7;
    UpdateModalRowHighlights();
    return;
   }
@@ -1088,7 +1185,7 @@ public sealed class QuietHome : NUIApplication
    return;
   }
   if(k=="Return"||k=="KP_Enter"){
-   if(modalRow==5){
+   if(modalRow==6){
     CloseLauncherSettings();
     return;
    }
@@ -1104,15 +1201,20 @@ public sealed class QuietHome : NUIApplication
    cur = (cur + dir + HdmiPresets.Length) % HdmiPresets.Length;
    hdmiPresetIndex[row] = cur;
    hdmiNames[row] = HdmiPresets[cur].name;
-   hdmiDescs[row] = HdmiPresets[cur].desc + $" · HDMI {row+1}";
+   hdmiDescs[row] = GetHdmiDesc(row);
    return;
   }
   if(row==3){
    currentLang = (currentLang + dir + LanguageCodes.Length) % LanguageCodes.Length;
+   for(int h=0; h<3; h++) hdmiDescs[h] = GetHdmiDesc(h);
    return;
   }
   if(row==4){
    soundEnabled = !soundEnabled;
+   return;
+  }
+  if(row==5){
+   animationsEnabled = !animationsEnabled;
    return;
   }
  }
