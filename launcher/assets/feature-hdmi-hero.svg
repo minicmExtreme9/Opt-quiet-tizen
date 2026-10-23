@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1040" height="442" viewBox="0 0 1040 442">
+  <defs>
+    <linearGradient id="hdmiBg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#0a3c4a" />
+      <stop offset="60%" stop-color="#126d88" />
+      <stop offset="100%" stop-color="#38a89d" />
+    </linearGradient>
+    <clipPath id="heroClip">
+      <rect width="1040" height="442" rx="28" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#heroClip)">
+    <rect width="1040" height="442" fill="url(#hdmiBg)" />
+    <circle cx="850" cy="180" r="260" fill="#45c7b4" opacity="0.18" />
+    <circle cx="920" cy="80" r="140" fill="#6fe3d3" opacity="0.12" />
+    <path d="M400 480 L1150 -80" stroke="#c3fff2" stroke-width="48" opacity="0.08" />
+    <!-- HDMI Connector on right side -->
+    <g transform="translate(680, 130) scale(1.35)">
+      <path d="M10 0 H170 L184 25 V103 L155 130 H25 L-4 103 V25 Z" fill="#e9fff7" filter="drop-shadow(0px 8px 16px rgba(0,0,0,0.3))" />
+      <path d="M21 27 H159 V84 L141 104 H39 L21 84 Z" fill="#135d72" />
+      <path d="M44 45 H136 V75 H44 Z" fill="#61bfb9" />
+      <path d="M55 45 V62 M75 45 V62 M95 45 V62 M115 45 V62" stroke="#e9fff7" stroke-width="6" stroke-linecap="round" />
+      <path d="M65 130 V168 H115 V130" fill="#a1dfcd" />
+    </g>
+  </g>
+</svg>

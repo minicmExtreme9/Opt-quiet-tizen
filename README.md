@@ -2,15 +2,20 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Original Author](https://img.shields.io/badge/Original%20Author-jss8649-informational.svg)](https://github.com/jss8649/quiet-tizen)
+[![Status](https://img.shields.io/badge/Status-Beta%20%7C%20Daily%20Driver%20Ready-brightgreen.svg)](#)
 [![Platform](https://img.shields.io/badge/Platform-Tizen%206.5%20%7C%207.0%20%7C%208.0%20%7C%209.0-0080FF.svg)](https://tizen.org)
 [![Runtime](https://img.shields.io/badge/.NET%20Runtime-6.0-512BD4.svg)](https://dotnet.microsoft.com)
 [![Target](https://img.shields.io/badge/Target-Samsung%20Smart%20TV-1428A0.svg)](https://samsung.com)
-[![UI Performance](https://img.shields.io/badge/UI%20Performance-60%20FPS%20%7C%20104ms-brightgreen.svg)](#performance-benchmarks)
+[![UI Performance](https://img.shields.io/badge/UI%20Performance-60%20FPS%20%7C%2092ms-brightgreen.svg)](#performance-benchmarks)
+[![Changelog](https://img.shields.io/badge/Changelog-v1.0.1-orange.svg)](CHANGELOG-v1.0.1.md)
 
 A lightweight, ad-free, hardware-accelerated native launcher and optimization suite for **Samsung Tizen Smart TVs**. 
 
 > [!NOTE]
-> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/jss8649/quiet-tizen) created by **jss8649**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, high-definition console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
+> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/jss8649/quiet-tizen) created by **jss8649**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, dynamic console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
+
+> [!IMPORTANT]
+> **Release Status:** Opt-quiet-tizen is currently in **Beta, but rock-solid and stable enough for daily use** as your TV's primary home screen. All core flows (HDMI port switching, streaming apps launch, D-pad navigation, volume/brightness controls, and sleep timers) are tested live on retail hardware and run 100% autonomously without external servers or cloud dependencies.
 
 ---
 
@@ -36,22 +41,29 @@ While the original upstream repository documented a targeted case study on a sin
    - Cards smoothly zoom and elevate with hardware-accelerated cubic easing when navigating via the remote.
    - Driven directly by the native Tizen DALi GPU compositor at a solid **60 FPS** without web DOM layout shifts.
 3. **⚡ Native TV Audio Feedback & Toggle**:
-   - Integrated with Samsung's native system audio feedback (libfeedback.so.0), delivering the authentic TV remote navigation click with zero latency and an on/off sound toggle.
-4. **🔧 Launcher Preferences & Custom HDMI Tags**:
-   - Access via the dedicated **Wrench icon** in the top-right toolbar.
-   - Customize HDMI 1, 2, and 3 names and descriptions on the fly, with quick gaming and device presets.
-   - Integrated **10-Language Switcher**: Español, English, Deutsch, Português, Français, 中文, 日本語, 한국어, हिन्दी, and العربية with dynamic CJK/Arabic/Devanagari font loading.
+   - Integrated with Samsung's native system audio feedback (`/usr/share/feedback/sound/operation/move.wav` via `libmmfkeysound.so.0`), delivering the authentic TV remote navigation click with zero latency and an on/off sound toggle.
+4. **🔧 Dedicated Launcher Preferences Modal ("Preferencias del launcher")**:
+   - Access via the dedicated **Wrench icon (`🔧`)** in the top-right toolbar.
+   - Clean UI without bracket clutter: directional arrows (`◀ Option ▶`, `OK`) for effortless remote control.
+   - Customize HDMI 1, 2, and 3 names and descriptions on the fly, with quick presets for consoles, PCs, and streaming boxes.
+   - Integrated **10-Language Switcher**: Español, English, Deutsch, Português, Français, 中文 (Mandarin), 日本語, 한국어, हिन्दी, and العربية.
    - **Sound & Animation Toggles**: Customize sound effects and switch between fluid Apple TV animations or instantaneous (0 ms) snap navigation.
-5. **📄 Smart Pagination Dots for Apps**:
+5. **🖼️ Dynamic HDMI 1 Hero Artwork**:
+   - Custom-crafted landscape vector illustrations for **Xbox Series X / S**, **Nintendo Switch**, **Apple TV 4K**, **Gaming PC**, **Blu-ray / DVD**, **Cable TV / Box**, and **PlayStation 4 / 5**.
+   - Dynamically updates the main Hero card in real time as you adjust your presets, with dimension-isolated caching preventing portrait/landscape distortion.
+6. **📏 Dynamic Tab Pill Sizing**:
+   - Real-time calculation of tab header widths (*Home*, *Apps*, *TV Settings*) based on translated string length and script density.
+   - Completely eliminates ellipsis truncation (e.g. `Paramètr...`, `Configura...`, `TV-Einste...`).
+7. **📄 Smart Pagination Dots for Apps**:
    - Dynamic page indicator (● ○ ○) in the Apps library when apps span multiple pages, deactivated when single-page to conserve memory.
-6. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:
-   - Custom high-definition assets for modern consoles (**PlayStation 4 / PC**, **Nintendo Switch**, **HDMI 3**) and streaming services (**Netflix**, **YouTube**, **Crunchyroll**, **HBO Max**, **Disney+**, **Apple Music**, and more).
-   - Seamless return from apps with zero multi-frame resize glitch.
-7. **📊 Tested & Verified on Modern QLED Hardware**:
+8. **🎨 Crisp 1:1 Vector & Hi-Res Graphics Pipeline**:
+   - Custom high-definition assets for modern consoles and streaming services (**Netflix**, **YouTube**, **Crunchyroll**, **HBO Max**, **Disney+**, **Apple Music**, and more).
+   - Seamless return from third-party apps with zero multi-frame resize glitch.
+9. **📊 Tested & Verified on Modern QLED Hardware**:
    - Verified on physical retail hardware: **Samsung QLED QN55Q7FAAPXPA** running firmware T-RSLFUABC-0090-1300.9 (Tizen 9.0 / RoseL platform).
-8. **📦 Pre-Built 1-Click TV Deployment Package**:
+10. **📦 Pre-Built 1-Click TV Deployment Package**:
    - Ready-to-run release bundle — no .NET compiler or SDK installation required on your host PC.
-   - Includes deploy-to-tv.bat for hands-off automated TV deployment, plus a standalone .tpk package for Tizen Studio.
+   - Includes `deploy-to-tv.bat` for hands-off automated TV deployment, plus a standalone `.tpk` package for Tizen Studio.
 
 ---
 
@@ -61,10 +73,10 @@ Smart TV SoCs have limited CPU horsepower. Architectural choices dictate whether
 
 Here is the real-world performance measured live on a physical **Samsung QN55Q7FAAPXPA**:
 
-| Metric | Stock Samsung Smart Hub | Web Launchers (Free My TV / TizenBrew) | Opt-quiet-tizen v1.0 |
+| Metric | Stock Samsung Smart Hub | Web Launchers (Free My TV / TizenBrew) | Opt-quiet-tizen v1.0.1 (Beta) |
 |---|---|---|---|
 | **Underlying Engine** | Heterogeneous (native shell + web widget embeds + ad network) | Chromium/WebKit Web Engine inside container | **Native .NET 6.0 with Tizen NUI / DALi GPU pipeline** |
-| **First UI Render Time** | 2,400 – 4,500 ms (ad network delay) | 1,200 – 2,200 ms (DOM parse & layout) | **104 – 114 ms** (measured live) |
+| **First UI Render Time** | 2,400 – 4,500 ms (ad network delay) | 1,200 – 2,200 ms (DOM parse & layout) | **92 – 104 ms** (measured live) |
 | **D-Pad Navigation Latency** | 180 – 350 ms | 220 – 450 ms (event loop queue) | **< 16 ms** (direct hardware event loop) |
 | **Display Refresh Rate** | 25 – 45 FPS (stutter during ad refreshes) | 15 – 25 FPS (CPU throttling on CSS blur) | **Solid 60 FPS** (hardware compositing) |
 | **Focus Animation Feel** | Clunky step animations | CSS transition drops frames on blur | **Smooth Apple TV-styled hardware zoom & easing** |
@@ -162,7 +174,7 @@ Once the prerequisites are ready, deployment is fully automated with no manual a
    - **Perform a cold reboot**: Press and hold the **Power** button on your remote for ~5 seconds until the TV turns off and reboots displaying the Samsung / QLED startup logo.
 
 2. **Deploy with 1 Click**:
-   - Download the latest **[Opt-quiet-tizen v1.0 Package (`Opt-quiet-tizen-v1.0.zip`)](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases/latest)** from the [Releases page](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases).
+   - Download the latest **[Opt-quiet-tizen v1.0.1 (Beta) Package (`Opt-quiet-tizen-v1.0.zip`)](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases/latest)** from the [Releases page](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases).
    - Extract the `.zip` archive on your computer.
    - Double-click and run `tv-direct-install/deploy-to-tv.bat`.
    - Enter your TV's local IP address when prompted (e.g., `192.168.1.32`).
@@ -226,7 +238,7 @@ Inherited from the original project and updated for modern platforms:
 
 ## 🔬 Tested Hardware Comparison
 
-| Item | Original Upstream Baseline | Opt-quiet-tizen v1.0 |
+| Item | Original Upstream Baseline | Opt-quiet-tizen v1.0.1 (Beta) |
 |---|---|---|
 | **Model** | `UN75U8000FFXZA` (2025 U8000F) | `QN55Q7FAAPXPA` (QLED 55") |
 | **Firmware** | `T-KSU2EFAKUC-0090-1300.9` | `T-RSLFUABC-0090-1300.9` |

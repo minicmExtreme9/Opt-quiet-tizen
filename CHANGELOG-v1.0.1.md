@@ -9,7 +9,12 @@
 
 ## 🌟 What's New & Enhancements
 
-### 1. 🔧 Wrench Preferences Menu ("Preferencias del launcher")
+### 1. 🖼️ Dynamic HDMI 1 Hero Artwork
+- **Console & Device Custom Vectors**: Added custom landscape illustrations for **Xbox Series X / S**, **Nintendo Switch**, **Apple TV 4K**, **Gaming PC**, **Blu-ray / DVD**, **Cable TV / Box**, and **PlayStation 4 / 5**.
+- **Real-Time Dynamic Swapping**: Selecting an HDMI preset inside the Wrench preferences automatically updates the main hero card in real time upon closing the menu.
+- **Dimension-Isolated Cache**: Images are indexed with resolution keys (`asset@WxH`), eliminating cross-slot aspect ratio conflicts.
+
+### 2. 🔧 Wrench Preferences Menu ("Preferencias del launcher")
 - **Top-Right Quick Access**: Replaced the redundant inputs icon with a clean wrench (`🔧`) settings button in the top-right toolbar.
 - **Cleaner Interface**: Removed the outer square brackets (`[ ]`) around values in the modal, keeping elegant directional arrows (`◀ PlayStation 4 / PC ▶`, `OK`, etc.).
 - **Updated UI Hints**: 
@@ -52,6 +57,7 @@
 
 ## 🐛 Bug Fixes
 
+- **HDMI 3 Portrait Card Distortion**: Fixed an issue where HDMI 3 picked up the 1040x442 hero image from cache, causing a cropped/stretched connector graphic. Introduced dimension-aware caching and dedicated `feature-hdmi-hero.svg`.
 - **Top-Right Toolbar Clock Collision**: Removed intrusive floating tooltips when focusing top-right toolbar icons, preventing overlap with the clock and date.
 - **Settings Card Background Glitch**: Fixed missing-icon background artifact in the TV Settings tab by removing the obsolete `shadow-settings.svg` reference.
 - **TV Settings Localization**: Localized all TV Settings cards, descriptions, and HDMI descriptors via the unified `i18n` dictionary.

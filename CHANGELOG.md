@@ -9,6 +9,7 @@ All notable changes to the **Opt-quiet-tizen** project will be documented in thi
 See [CHANGELOG-v1.0.1.md](CHANGELOG-v1.0.1.md) for full details.
 
 ### Added
+- **Dynamic HDMI 1 Hero Artwork**: Custom landscape illustrations for Xbox Series X/S, Nintendo Switch, Apple TV 4K, Gaming PC, Blu-ray/DVD, Cable TV/Box, and PS4/PS5 that dynamically update upon selecting presets.
 - **Preferencias del Launcher**: Dedicated modal accessed via the top-right Wrench icon (`🔧`) to configure HDMI preset names, language, sound, and animations.
 - **Clean Selection UI**: Removed outer brackets `[ ]` in modal values, presenting clean directional navigation arrows (`◀ ▶`).
 - **10 Languages Support**: Added full localized strings and date formats for Spanish, English, German, Portuguese, French, Mandarin Chinese, Japanese, Korean, Hindi, and Arabic.
@@ -19,6 +20,7 @@ See [CHANGELOG-v1.0.1.md](CHANGELOG-v1.0.1.md) for full details.
 - **Apps Pagination Dots**: Adaptive indicator showing page count and current page in the apps grid, dormant when single-page.
 
 ### Fixed
+- Fixed HDMI 3 portrait image distortion by isolating dimension-specific caching (`asset + "@" + w + "x" + h`).
 - Fixed top-right toolbar labels overlapping the date/clock widget.
 - Fixed gray missing-image artifact behind TV Settings tiles by removing broken `shadow-settings.svg` references.
 - Fixed unlocalized text in TV Settings tiles and HDMI port descriptions.

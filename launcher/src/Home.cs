@@ -66,19 +66,28 @@ public sealed class QuietHome : NUIApplication
  string[] hdmiNames = new[] { "PlayStation 4 / PC", "Nintendo Switch", "HDMI 3" };
  string[] hdmiDescs = new[] { "Console or PC · HDMI 1", "Game console · HDMI 2", "External device · HDMI 3" };
 
- static readonly (string name, string presetKey)[] HdmiPresets = new[] {
-  ("PlayStation 4 / PC", "preset_console_pc"),
-  ("PlayStation 5", "preset_game_console"),
-  ("Nintendo Switch", "preset_game_console"),
-  ("Xbox Series X / S", "preset_game_console"),
-  ("Apple TV 4K", "preset_streaming"),
-  ("Gaming PC", "preset_pc"),
-  ("Chromecast / Fire TV", "preset_streaming"),
-  ("Blu-ray / DVD", "preset_player"),
-  ("Cable TV / Box", "preset_tv_box"),
-  ("HDMI Device", "preset_device")
+ static readonly (string name, string presetKey, string heroAsset)[] HdmiPresets = new[] {
+  ("PlayStation 4 / PC", "preset_console_pc", "feature-ps4.png"),
+  ("PlayStation 5", "preset_game_console", "feature-ps5.svg"),
+  ("Nintendo Switch", "preset_game_console", "feature-switch-hero.svg"),
+  ("Xbox Series X / S", "preset_game_console", "feature-xbox.svg"),
+  ("Apple TV 4K", "preset_streaming", "feature-appletv.svg"),
+  ("Gaming PC", "preset_pc", "feature-pc.svg"),
+  ("Chromecast / Fire TV", "preset_streaming", "feature-tvbox.svg"),
+  ("Blu-ray / DVD", "preset_player", "feature-bluray.svg"),
+  ("Cable TV / Box", "preset_tv_box", "feature-tvbox.svg"),
+  ("HDMI Device", "preset_device", "feature-hdmi-hero.svg")
  };
  int[] hdmiPresetIndex = new[] { 0, 2, 9 };
+
+ string GetHeroAsset(int index)
+ {
+  int pIdx = (index >= 0 && index < hdmiPresetIndex.Length) ? hdmiPresetIndex[index] : 0;
+  if(pIdx >= 0 && pIdx < HdmiPresets.Length){
+   return HdmiPresets[pIdx].heroAsset;
+  }
+  return "feature-ps4.png";
+ }
 
  string GetHdmiDesc(int index)
  {
@@ -437,7 +446,8 @@ public sealed class QuietHome : NUIApplication
   var title=TextWindow(page==0?T("home"):page==1?T("your_apps"):T("quick_settings"),76,55,1350,100,76,ink,"Display");
 
   if(page==0){
-   var hero=Feature(hdmiNames[0],"hdmi:13",GetHdmiDesc(0),"feature-ps4.png",80,262,1040,442,"hero");
+   string heroAsset=GetHeroAsset(0);
+   var hero=Feature(hdmiNames[0],"hdmi:13",GetHdmiDesc(0),heroAsset,80,262,1040,442,"hero");
    hero.Card.Add(Label(hdmiNames[0].ToUpperInvariant(),44,52,550,40,24,new Color(.86f,.91f,1,1),"Semibold"));
    hero.Card.Add(Label(T("lets_play"),40,124,560,100,72,white,"Display"));
    hero.Card.Add(Label($"{T("switch_to")} HDMI 1",46,246,440,48,30,new Color(.88f,.93f,1,1)));
@@ -572,7 +582,11 @@ public sealed class QuietHome : NUIApplication
  {
   artworkPreloadRoot=new View{Size2D=new Size2D(1920,1080),Opacity=0};
   Window.Default.Add(artworkPreloadRoot);
-  PreloadFeature("feature-ps4.png",1040,442);
+  var preloadedHeroes=new HashSet<string>();
+  foreach(var pr in HdmiPresets){
+   if(preloadedHeroes.Add(pr.heroAsset))
+    PreloadFeature(pr.heroAsset,1040,442);
+  }
   PreloadFeature("feature-switch.png",320,442);
   PreloadFeature("feature-hdmi.svg",320,442);
   string[] quickIcons={"volume","brightness","game","sleep","mute","controller","network","settings"};
@@ -610,9 +624,10 @@ public sealed class QuietHome : NUIApplication
 
  void PreloadFeature(string asset,int w,int h)
  {
-  if(!featureCache.ContainsKey(asset)){
+  string key=asset+"@"+w+"x"+h;
+  if(!featureCache.ContainsKey(key)){
    var img=new ImageView{ResourceUrl=Root+asset,Size2D=new Size2D(w,h),DesiredWidth=w*2,DesiredHeight=h*2,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(28,28,28,28)};
-   featureCache[asset]=img;
+   featureCache[key]=img;
    artworkPreloadRoot.Add(img);
   }
  }
@@ -654,11 +669,13 @@ public sealed class QuietHome : NUIApplication
  {
   var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-"+type+".svg",Position2D=new Position2D(x-24,y-14),Size2D=new Size2D(w+48,h+64)});
   var card=Panel(x+w/2,y+h/2,w,h,new Color(0,0,0,0),28);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
-  if(!featureCache.TryGetValue(asset,out var img)){
+  string key=asset+"@"+w+"x"+h;
+  if(!featureCache.TryGetValue(key,out var img)){
    img=new ImageView{ResourceUrl=Root+asset,Size2D=new Size2D(w,h),FittingMode=FittingModeType.ScaleToFill,SamplingMode=SamplingModeType.BoxThenLanczos};
-   featureCache[asset]=img;
+   featureCache[key]=img;
   }else{
    if(img.GetParent()!=null)img.GetParent().Remove(img);
+   img.Size2D=new Size2D(w,h);
   }
   card.Add(img);
   var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(28,28,28,28),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
