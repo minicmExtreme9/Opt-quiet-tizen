@@ -31,4 +31,4 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Compilación .NET 6 limpia (0 errores, 0 advertencias).
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 2)**:
-  - *Pendiente de verificación en TV por el dueño.*
+  - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). Cambio de idiomas fluido, todas las cadenas coinciden exactamente con el idioma seleccionado sin textos cruzados.
