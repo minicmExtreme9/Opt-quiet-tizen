@@ -213,43 +213,73 @@ public sealed class QuietHome : NUIApplication
  protected override void OnResume()
  {
   base.OnResume();
-  clockTimer?.Start();
-  RefreshSource();
-  if(tabs!=null){
-   if(page==0){
-    // Keep scene alive smoothly with zero re-render flicker
-    selected=SourceIndex();
-    UpdateFocus(false);
-   }else if(page==2){
-    RefreshSettings();
-    UpdateFocus(false);
+  try{
+   Window.Default.Raise();
+   clockTimer?.Start();
+   RefreshSource();
+   CancelLongPress();
+   longPressTriggered=false;
+   waitingForLongPress=false;
+   lastKey="";
+   lastKeyAt=0;
+   if(tabs!=null){
+    if(page==0){
+     area=1;
+     selected=SourceIndex();
+     UpdateFocus(false);
+    }else if(page==2){
+     RefreshSettings();
+     UpdateFocus(false);
+    }
    }
+   WriteState("resumed");
+  }catch(Exception ex){
+   DebugLog.Error("Lifecycle", "OnResume exception", ex);
   }
-  WriteState("resumed");
  }
 
  protected override void OnAppControlReceived(AppControlReceivedEventArgs e)
  {
   base.OnAppControlReceived(e);
-  string requested;
-  if(e.ReceivedAppControl.ExtraData.TryGet("quiet_page",out requested)&&requested=="settings")OpenSettings("settings_request");
-  else if(requested=="apps"){page=1;area=1;selected=0;BuildPage(true);}
-  else Home("home_request");
+  try{
+   string requested=null;
+   if(e!=null&&e.ReceivedAppControl!=null&&e.ReceivedAppControl.ExtraData!=null){
+    e.ReceivedAppControl.ExtraData.TryGet("quiet_page",out requested);
+   }
+   if(requested=="settings")OpenSettings("settings_request");
+   else if(requested=="apps"){page=1;area=1;selected=0;BuildPage(true);}
+   else Home("home_request");
+  }catch(Exception ex){
+   DebugLog.Error("AppControl", "OnAppControlReceived exception", ex);
+   Home("home_request");
+  }
  }
 
  protected override void OnPause()
  {
   base.OnPause();
-  CancelLongPress();
-  if(reordering)StopReordering();
-  editing="";
-  clockTimer?.Stop();
-  WriteState("paused");
+  try{
+   CancelLongPress();
+   longPressTriggered=false;
+   waitingForLongPress=false;
+   if(reordering)StopReordering();
+   editing="";
+   lastKey="";
+   lastKeyAt=0;
+   clockTimer?.Stop();
+   WriteState("paused");
+  }catch(Exception ex){
+   DebugLog.Error("Lifecycle", "OnPause exception", ex);
+  }
  }
 
  void Home(string activity)
  {
   CancelLongPress();
+  longPressTriggered=false;
+  waitingForLongPress=false;
+  lastKey="";
+  lastKeyAt=0;
   if(reordering)StopReordering();
   clockTimer?.Start();
   RefreshSource();
@@ -257,6 +287,7 @@ public sealed class QuietHome : NUIApplication
    if(page==0 && scene.Count>0 && modalOverlay==null){
     // Do NOT destroy and recreate the whole scene!
     // Prevents the 2-frame zoom-in / zoom-out glitch when returning from an app!
+    area=1;
     selected=SourceIndex();
     UpdateFocus(false);
     WriteState(activity);
