@@ -32,3 +32,18 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 2)**:
   - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). Cambio de idiomas fluido, todas las cadenas coinciden exactamente con el idioma seleccionado sin textos cruzados.
+
+
+---
+
+## PASO 3 — Capacidades nativas con detección en runtime (NativeCapabilities)
+- **Archivos creados / modificados**:
+  - `launcher/src/NativeCapabilities.cs`: Nueva clase estática que encapsula todas las 18 firmas `DllImport` del sistema Tizen (`libcapi-media-sound-manager-tv.so.0`, `libsettings-api.so`, `libcapi-appfw-app-control.so.0`, `libvconf.so.0`, `libmmfkeysound.so.0`, `libc.so.6`, `libsource-api.so`). Provee detección segura en runtime (`Initialize()`) probando cada subsistema con manejo de excepciones y cacheando flags de capacidad (`HasSoundManager`, `HasSettingsApi`, `HasAppControl`, `HasVconf`, `HasKeySound`, `HasVolume`, `HasBrightness`, etc.). Ofrece métodos wrapper de alto nivel que evitan exponer `IntPtr` o llamadas desprotegidas al launcher.
+  - `launcher/src/Home.cs`: Eliminados todos los `DllImport`s directos. Integración con `NativeCapabilities.Initialize()` al arrancar. La cuadrícula de Ajustes Rápidos (Página 2) ahora se construye dinámicamente según las capacidades detectadas, omitiendo controles no disponibles en lugar de fallar al seleccionarlos. La navegación por teclado (Arriba/Abajo) y la actualización de textos fueron protegidas contra desbordamientos de índice ante controles dinámicos.
+  - `launcher/src/Home.csproj`: Inclusión de `NativeCapabilities.cs` en los ítems de compilación.
+- **Validación previa**:
+  - Compilación .NET 6 limpia (0 errores, 0 advertencias).
+  - Tests de sondeo ejecutados: verificado el comportamiento de fallback seguro en entornos donde las bibliotecas nativas de Tizen no están presentes.
+  - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
+- **Resultado en TV del dueño (Punto de control 3)**:
+  - *Pendiente de validación en hardware real por el dueño.*

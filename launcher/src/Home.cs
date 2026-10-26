@@ -121,28 +121,11 @@ public sealed class QuietHome : NUIApplication
  Color captionMuted => darkMode ? new Color(0.78f,0.83f,0.92f,1) : new Color(0.28f,0.32f,0.40f,1);
  Color descMuted => darkMode ? new Color(0.62f,0.68f,0.80f,1) : new Color(0.42f,0.46f,0.54f,1);
 
- [DllImport("libsource-api.so")] static extern int connect_source(int sourceType);
- [DllImport("libvconf.so.0")] static extern int vconf_get_int(string key,out int value);
- [DllImport("libcapi-appfw-app-control.so.0")] static extern int app_control_create(out IntPtr app);
- [DllImport("libcapi-appfw-app-control.so.0")] static extern int app_control_set_app_id(IntPtr app,string id);
- [DllImport("libcapi-appfw-app-control.so.0")] static extern int app_control_set_operation(IntPtr app,string operation);
- [DllImport("libcapi-appfw-app-control.so.0")] static extern int app_control_add_extra_data(IntPtr app,string key,string value);
- [DllImport("libcapi-appfw-app-control.so.0")] static extern int app_control_send_launch_request(IntPtr app,IntPtr cb,IntPtr data);
- [DllImport("libcapi-appfw-app-control.so.0")] static extern int app_control_destroy(IntPtr app);
- [DllImport("libc.so.6")] static extern int system(string command);
- [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_get_master_volume(out int value);
- [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_set_master_volume(int value);
- [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_get_master_mute(out int value);
- [DllImport("libcapi-media-sound-manager-tv.so.0")] static extern int sound_manager_set_master_mute(int value);
- [DllImport("libmmfkeysound.so.0")] static extern int mm_sound_play_keysound(string filename, int type);
- [DllImport("libsettings-api.so")] static extern bool CSharpGetItemValue(string id,out string name,out string value);
- [DllImport("libsettings-api.so")] static extern bool CSharpSetItemValue(string id,string value);
- [DllImport("libsettings-api.so")] static extern bool CSharpGetItemEnable(string id,out bool enabled);
- [DllImport("libsettings-api.so")] static extern bool CSharpGetItemMinMaxStepValue(string id,out double min,out double max,out double step);
 
  protected override void OnCreate()
  {
   base.OnCreate();
+  NativeCapabilities.Initialize();
   try{
    fontLoaded=FontClient.Instance.AddCustomFontDirectory(Root+"fonts");
    FontClient.Instance.AddCustomFontDirectory("/usr/share/fonts");
@@ -282,7 +265,7 @@ public sealed class QuietHome : NUIApplication
   WriteState(activity);
  }
 
- void RefreshSource(){try{int n;if(vconf_get_int("memory/system/source_type",out n)==0&&n>=13&&n<=16)lastSource=n;}catch{}}
+ void RefreshSource(){try{int n;if(NativeCapabilities.GetVconfInt("memory/system/source_type",out n)&&n>=13&&n<=16)lastSource=n;}catch{}}
  int SourceIndex(){return lastSource==14?1:lastSource==15?2:0;}
 
  View Add(View v){scene.Add(v);if(pageContainer!=null)pageContainer.Add(v);else Window.Default.Add(v);return v;}
@@ -355,14 +338,20 @@ public sealed class QuietHome : NUIApplication
    BuildLibrary();
   }else{
    RefreshSettings();
-   SettingsTile(T("volume"),"volume",T("volume_desc"),"volume",0,0);
-   SettingsTile(T("brightness"),"brightness",T("brightness_desc"),"brightness",1,0);
-   SettingsTile(T("game_mode"),"game-mode",T("game_mode_desc"),"game",2,0);
-   SettingsTile(T("sleep_timer"),"sleeptimer",T("sleep_timer_desc"),"sleep",3,0);
-   SettingsTile(T("sound"),"mute",T("mute_desc"),"mute",0,1);
-   SettingsTile(T("controllers"),"controllers",T("controllers_desc"),"controller",1,1);
-   SettingsTile(T("network"),"network",T("network_desc"),"network",2,1);
-   SettingsTile(T("advanced"),"app:org.tizen.menu",T("advanced_desc"),"settings",3,1);
+   var row0=new List<(string title,string action,string desc,string icon)>();
+   if(NativeCapabilities.HasVolume)row0.Add((T("volume"),"volume",T("volume_desc"),"volume"));
+   if(NativeCapabilities.HasBrightness)row0.Add((T("brightness"),"brightness",T("brightness_desc"),"brightness"));
+   if(NativeCapabilities.HasGameMode)row0.Add((T("game_mode"),"game-mode",T("game_mode_desc"),"game"));
+   if(NativeCapabilities.HasSleepTimer)row0.Add((T("sleep_timer"),"sleeptimer",T("sleep_timer_desc"),"sleep"));
+
+   var row1=new List<(string title,string action,string desc,string icon)>();
+   if(NativeCapabilities.HasMute)row1.Add((T("sound"),"mute",T("mute_desc"),"mute"));
+   if(NativeCapabilities.HasControllers)row1.Add((T("controllers"),"controllers",T("controllers_desc"),"controller"));
+   if(NativeCapabilities.HasNetworkSettings)row1.Add((T("network"),"network",T("network_desc"),"network"));
+   if(NativeCapabilities.HasAdvancedSettings)row1.Add((T("advanced"),"app:org.tizen.menu",T("advanced_desc"),"settings"));
+
+   for(int i=0;i<row0.Count;i++)SettingsTile(row0[i].title,row0[i].action,row0[i].desc,row0[i].icon,i,0);
+   for(int i=0;i<row1.Count;i++)SettingsTile(row1[i].title,row1[i].action,row1[i].desc,row1[i].icon,i,1);
   }
 
   var animContainer=pageContainer;
@@ -444,9 +433,9 @@ public sealed class QuietHome : NUIApplication
   if(!soundEnabled)return;
   try{
    if(File.Exists("/usr/share/feedback/sound/operation/move.wav"))
-    mm_sound_play_keysound("/usr/share/feedback/sound/operation/move.wav", 0);
+    NativeCapabilities.PlayKeySound("/usr/share/feedback/sound/operation/move.wav", 0);
    else if(File.Exists(Root+"click.wav"))
-    mm_sound_play_keysound(Root+"click.wav", 0);
+    NativeCapabilities.PlayKeySound(Root+"click.wav", 0);
   }catch{}
  }
 
@@ -718,15 +707,18 @@ public sealed class QuietHome : NUIApplication
    toolbarHint.Text="";
    detail.Text=slots[curFocused].Description;
   }
-  if(page==2&&slots.Count>=8){
-   slots[0].Label.Text=SettingDisplay("volume");
-   slots[1].Label.Text=SettingDisplay("brightness");
-   slots[2].Label.Text=SettingDisplay("game-mode");
-   slots[3].Label.Text=SettingDisplay("sleeptimer");
-   slots[4].Label.Text=currentMute<0?T("unavailable"):currentMute==1?T("muted"):T("sound_on");
-   slots[5].Label.Text=T("pair_controller");
-   slots[6].Label.Text=T("connections");
-   slots[7].Label.Text=T("all_settings");
+  if(page==2){
+   foreach(var s in slots){
+    if(s.Row<0||s.Label==null)continue;
+    if(s.Action=="volume")s.Label.Text=SettingDisplay("volume");
+    else if(s.Action=="brightness")s.Label.Text=SettingDisplay("brightness");
+    else if(s.Action=="game-mode")s.Label.Text=SettingDisplay("game-mode");
+    else if(s.Action=="sleeptimer")s.Label.Text=SettingDisplay("sleeptimer");
+    else if(s.Action=="mute")s.Label.Text=currentMute<0?T("unavailable"):currentMute==1?T("muted"):T("sound_on");
+    else if(s.Action=="controllers")s.Label.Text=T("pair_controller");
+    else if(s.Action=="network")s.Label.Text=T("connections");
+    else if(s.Action=="app:org.tizen.menu")s.Label.Text=T("all_settings");
+   }
   }
   if(reordering&&curFocused>=0&&curFocused<slots.Count)notice.Text=T("reorder_hint");
   if(editing!="")detail.Text="Left / Right to adjust "+editing+" · Select or Back to finish";
@@ -760,15 +752,15 @@ public sealed class QuietHome : NUIApplication
    if(page==1&&HandleLibraryKey(k))return;
    if(editing!=""){if(k=="Left"||k=="Right"){int d=k=="Left"?-1:1;if(editing=="volume")ChangeVolume(d);else ChangeBrightness(d);}else if(k=="Return"||k=="KP_Enter"||k=="XF86Back"||k=="Back"||k=="Escape"){editing="";UpdateFocus();}return;}
    if(k=="Up"){
-    if(area==2){int col=Row(1).IndexOf(selected);area=1;selected=Row(0)[page==2?col:0];}
+    if(area==2){var r0=Row(0);var r1=Row(1);int col=r1.IndexOf(selected);area=1;selected=r0.Count>0?(page==2?r0[Math.Max(0,Math.Min(col>=0?col:0,r0.Count-1))]:r0[0]):0;}
     else if(area==1){area=0;}
     else if(area==0){area=3;var r=Row(-1);selected=r.Count>0?r[Math.Min(page,r.Count-1)]:0;}
     UpdateFocus();
    }
    else if(k=="Down"){
     if(area==3){area=0;}
-    else if(area==0){area=1;selected=Row(0)[0];}
-    else if(area==1){int col=Row(0).IndexOf(selected);area=2;selected=Row(1)[page==2?col:0];}
+    else if(area==0){area=1;selected=Row(0).Count>0?Row(0)[0]:0;}
+    else if(area==1){var r0=Row(0);var r1=Row(1);int col=r0.IndexOf(selected);area=2;selected=r1.Count>0?(page==2?r1[Math.Max(0,Math.Min(col>=0?col:0,r1.Count-1))]:r1[0]):selected;}
     UpdateFocus();
    }
    else if(k=="Left"||k=="Right"){
@@ -938,7 +930,7 @@ public sealed class QuietHome : NUIApplication
   if(a=="volume"||a=="brightness"){RefreshSettings();if(a=="brightness"&&!CanEdit(a)){ShowError("Brightness is unavailable for the current input.");return;}editing=a;UpdateFocus();return;}
   if(a=="game-mode"){RefreshSettings();SetSetting(a,SettingValue(a)=="1"?"0":"1");return;}
   if(a=="sleeptimer"){RefreshSettings();int n;if(int.TryParse(SettingValue(a),out n))SetSetting(a,((n+1)%5).ToString());return;}
-  if(a=="mute"){int n;int r=sound_manager_get_master_mute(out n);if(r==0)r=sound_manager_set_master_mute(n==1?0:1);if(r!=0)ShowError("Use the remote's mute button.");RefreshSettings();UpdateFocus();WriteState("mute_changed");}
+  if(a=="mute"){int n;bool ok=false;if(NativeCapabilities.GetMasterMute(out n)){ok=NativeCapabilities.SetMasterMute(n==1?0:1);}if(!ok)ShowError("Use the remote's mute button.");RefreshSettings();UpdateFocus();WriteState("mute_changed");}
  }
 
  void OpenLauncherSettings()
@@ -1140,14 +1132,14 @@ public sealed class QuietHome : NUIApplication
  }
 
  void RefreshSettings(){
-  currentVolume=sound_manager_get_master_volume(out var v)==0?v:-1;
-  currentMute=sound_manager_get_master_mute(out var m)==0?m:-1;
+  currentVolume=NativeCapabilities.GetMasterVolume(out var v)?v:-1;
+  currentMute=NativeCapabilities.GetMasterMute(out var m)?m:-1;
   foreach(var id in new[]{"brightness","game-mode","sleeptimer"}){
-   try{if(CSharpGetItemValue(id,out var name,out var value)&&!string.IsNullOrEmpty(value)){settingValues[id]=value;settingNames[id]=name;}else{settingValues.Remove(id);settingNames.Remove(id);}
-    settingEnabled[id]=CSharpGetItemEnable(id,out var enabled)&&enabled;
+   try{if(NativeCapabilities.GetItemValue(id,out var name,out var value)&&!string.IsNullOrEmpty(value)){settingValues[id]=value;settingNames[id]=name;}else{settingValues.Remove(id);settingNames.Remove(id);}
+    settingEnabled[id]=NativeCapabilities.GetItemEnable(id,out var enabled)&&enabled;
    }catch{settingValues.Remove(id);settingNames.Remove(id);settingEnabled[id]=false;}
   }
-  try{if(!CSharpGetItemMinMaxStepValue("brightness",out brightnessMin,out brightnessMax,out brightnessStep)||brightnessStep<=0){brightnessMin=0;brightnessMax=50;brightnessStep=1;}}catch{}
+  try{if(!NativeCapabilities.GetItemMinMaxStepValue("brightness",out brightnessMin,out brightnessMax,out brightnessStep)||brightnessStep<=0){brightnessMin=0;brightnessMax=50;brightnessStep=1;}}catch{}
  }
 
  string SettingValue(string id){return settingValues.TryGetValue(id,out var v)?v:"";}
@@ -1155,7 +1147,7 @@ public sealed class QuietHome : NUIApplication
  bool CanEdit(string id){return settingEnabled.TryGetValue(id,out var enabled)&&enabled&&settingValues.ContainsKey(id);}
  void SetSetting(string id,string value){
   if(!CanEdit(id)){ShowError("This setting is unavailable for the current input.");return;}
-  bool ok=false;try{ok=CSharpSetItemValue(id,value);}catch{}
+  bool ok=false;try{ok=NativeCapabilities.SetItemValue(id,value);}catch{}
   RefreshSettings();UpdateFocus();
   bool verified=ok&&SettingValue(id)==value;
   if(!verified)ShowError("The TV could not apply this setting. Try Advanced settings.");
@@ -1163,31 +1155,16 @@ public sealed class QuietHome : NUIApplication
  }
 
  void ChangeBrightness(int delta){double n;if(double.TryParse(SettingValue("brightness"),NumberStyles.Float,CultureInfo.InvariantCulture,out n))SetSetting("brightness",Math.Max(brightnessMin,Math.Min(brightnessMax,n+delta*brightnessStep)).ToString(CultureInfo.InvariantCulture));}
- void ChangeVolume(int delta){int n;int r=sound_manager_get_master_volume(out n);if(r==0)r=sound_manager_set_master_volume(Math.Max(0,Math.Min(100,n+delta)));if(r!=0)ShowError("Use the remote's volume buttons.");RefreshSettings();UpdateFocus();WriteState("volume_changed");}
+ void ChangeVolume(int delta){int n;bool ok=false;if(NativeCapabilities.GetMasterVolume(out n)){ok=NativeCapabilities.SetMasterVolume(Math.Max(0,Math.Min(100,n+delta)));}if(!ok)ShowError("Use the remote's volume buttons.");RefreshSettings();UpdateFocus();WriteState("volume_changed");}
 
  void SelectSource(int source)
  {
   try {
-   IntPtr c;
-   int r = app_control_create(out c);
+   int r = NativeCapabilities.SwitchHdmiSource(source);
+   WriteState("source_switch:" + source + ":" + r);
    if (r == 0) {
-    try {
-     app_control_set_app_id(c, "org.tizen.tv-viewer");
-     app_control_set_operation(c, "http://tizen.org/appcontrol/operation/default");
-     app_control_add_extra_data(c, "CALLER", "org.tizen.source-list");
-     app_control_add_extra_data(c, "change_source", source.ToString());
-     app_control_add_extra_data(c, "mbrIndex", "-2");
-     app_control_add_extra_data(c, "sourceswitch_banner", "disable");
-     app_control_add_extra_data(c, "__K_EX_FORCE_BOOST", "enable");
-     r = app_control_send_launch_request(c, IntPtr.Zero, IntPtr.Zero);
-     WriteState("source_switch:" + source + ":" + r);
-     if (r == 0) {
-      lastSource = source;
-      return;
-     }
-    } finally {
-     app_control_destroy(c);
-    }
+    lastSource = source;
+    return;
    }
    ShowError("Input could not be switched. Open Advanced settings to check the connection.");
    WriteState("source_failed:" + r);
@@ -1200,23 +1177,10 @@ public sealed class QuietHome : NUIApplication
  {
   try{
    notice.Text="";
-   IntPtr c;int r=app_control_create(out c);
-   if(r==0){
-    try{
-     app_control_set_app_id(c,id);
-     app_control_set_operation(c,"http://tizen.org/appcontrol/operation/default");
-     if(id=="org.tizen.menu"&&menuItem!=null){
-      app_control_add_extra_data(c,"menuitem",menuItem);
-      app_control_add_extra_data(c,"launchoption","pressed");
-     }
-     app_control_add_extra_data(c,"__K_EX_FORCE_BOOST","enable");
-     app_control_add_extra_data(c,"__K_SPLASH_SCREEN","LA_UI_VR_TRANSPARENT");
-     r=app_control_send_launch_request(c,IntPtr.Zero,IntPtr.Zero);
-     WriteState("launch:"+id+(menuItem==null?"":":"+menuItem)+":"+r);
-     if(r==0)return;
-    }finally{app_control_destroy(c);}
-   }
-   int res=system("app_launcher -s "+id);
+   int r=NativeCapabilities.LaunchAppControl(id,menuItem);
+   WriteState("launch:"+id+(menuItem==null?"":":"+menuItem)+":"+r);
+   if(r==0)return;
+   int res=NativeCapabilities.ExecuteSystem("app_launcher -s "+id);
    WriteState("launch:"+id+":sys:"+res);
    if(res!=0&&r!=0)ShowError("Could not open this screen. Try Advanced settings.");
   }catch(Exception ex){ShowError(ex.Message);}
