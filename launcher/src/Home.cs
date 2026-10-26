@@ -340,7 +340,9 @@ public sealed class QuietHome : NUIApplication
   Window.Default.Add(pageContainer);
   scene.Add(pageContainer);
 
-  var title=TextWindow(page==0?T("home"):page==1?T("your_apps"):T("quick_settings"),SclX(76),SclY(55),SclX(1350),SclY(100),SclF(76),ink,"Display");
+  string pageTitle=page==0?T("home"):page==1?T("your_apps"):T("quick_settings");
+  if(NativeCapabilities.IsLiteVariant)pageTitle+=" (Lite)";
+  var title=TextWindow(pageTitle,SclX(76),SclY(55),SclX(1350),SclY(100),SclF(76),ink,"Display");
 
   if(page==0){
    string heroAsset=GetHeroAsset(0);
@@ -372,6 +374,11 @@ public sealed class QuietHome : NUIApplication
    if(NativeCapabilities.HasControllers)row1.Add((T("controllers"),"controllers",T("controllers_desc"),"controller"));
    if(NativeCapabilities.HasNetworkSettings)row1.Add((T("network"),"network",T("network_desc"),"network"));
    if(NativeCapabilities.HasAdvancedSettings)row1.Add((T("advanced"),"app:org.tizen.menu",T("advanced_desc"),"settings"));
+
+   if(row0.Count==0&&row1.Count>0){
+    row0=row1;
+    row1=new List<(string title,string action,string desc,string icon)>();
+   }
 
    for(int i=0;i<row0.Count;i++)SettingsTile(row0[i].title,row0[i].action,row0[i].desc,row0[i].icon,i,0);
    for(int i=0;i<row1.Count;i++)SettingsTile(row1[i].title,row1[i].action,row1[i].desc,row1[i].icon,i,1);
@@ -802,7 +809,7 @@ public sealed class QuietHome : NUIApplication
    else if(k=="Down"){
     if(area==3){area=0;}
     else if(area==0){area=1;selected=Row(0).Count>0?Row(0)[0]:0;}
-    else if(area==1){var r0=Row(0);var r1=Row(1);int col=r0.IndexOf(selected);area=2;selected=r1.Count>0?(page==2?r1[Math.Max(0,Math.Min(col>=0?col:0,r1.Count-1))]:r1[0]):selected;}
+    else if(area==1){var r0=Row(0);var r1=Row(1);if(r1.Count>0){int col=r0.IndexOf(selected);area=2;selected=(page==2?r1[Math.Max(0,Math.Min(col>=0?col:0,r1.Count-1))]:r1[0]);}UpdateFocus();}
     UpdateFocus();
    }
    else if(k=="Left"||k=="Right"){
@@ -817,7 +824,7 @@ public sealed class QuietHome : NUIApplication
      if(n<0||n>=r.Count){area=0;page=n<0?2:0;selected=0;PlayTick();BuildPage(true);}
      else{selected=r[n];UpdateFocus();}
     }
-    else{var r=Row(area-1);int n=r.IndexOf(selected);selected=r[(n+d+r.Count)%r.Count];UpdateFocus();}
+    else{var r=Row(area-1);if(r.Count>0){int n=r.IndexOf(selected);selected=r[(n+d+r.Count)%r.Count];}UpdateFocus();}
    }
    else if(k=="Return"||k=="KP_Enter"){if(area==0){area=1;selected=0;UpdateFocus();}else Activate();}
    else if(k=="XF86Back"||k=="Back"||k=="Escape"||k=="XF86Exit")SelectSource(lastSource);

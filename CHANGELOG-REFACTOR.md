@@ -77,3 +77,25 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
 - **Resultado en TV del dueño (Punto de control 5)**:
   - Verificado y confirmado en Samsung Smart TV real (QLED). El layout dinámico escala y se visualiza correctamente en la pantalla sin desalineaciones ni recortes.
   - Se restauró la visibilidad de la tarjeta de "Modo Juego" en la fila de Ajustes Rápidos (`HasGameMode => HasSettingsApi`) a petición del dueño, reempaquetado y desplegado (PID: 17669).
+
+
+---
+
+## PASO 6 — Build separado para variante "sin privilegios" (Lite)
+- **Archivos creados / modificados**:
+  - `launcher/src/NativeCapabilities.cs`: Introducida directiva condicional `UNPRIVILEGED_LITE` que desactiva y excluye totalmente las llamadas P/Invoke a librerías propietarias y privilegiadas de Samsung (`libsettings-api.so`, `libcapi-media-sound-manager-tv.so.0`, `libvconf.so.0`, `libmmfkeysound.so.0`, `libsource-api.so`, y `libc.so.6: system`). Expone `IsLiteVariant`. Únicamente mantiene activa la API pública de Tizen `libcapi-appfw-app-control.so.0` para lanzamiento de aplicaciones y cambio de fuentes HDMI.
+  - `launcher/src/Home.csproj`: Añadida condición de compilación `<DefineConstants Condition="'$(VARIANT)' == 'Lite'">$(DefineConstants);UNPRIVILEGED_LITE</DefineConstants>`.
+  - `launcher/src/Home.cs`: Adaptada la página de Ajustes Rápidos para reorganizar las opciones disponibles en la Fila 0 cuando los ajustes de volumen/brillo/pantalla no están presentes. Añadida indicación visual `(Lite)` en la cabecera. Protección contra división por cero en navegación D-Pad si alguna fila está vacía.
+  - `tools/build.py`: Incorporado argumento `--variant [full|lite]` para compilar de forma aislada en `.local/build-lite/` y generar el paquete intermedio en `.local/package-lite/`.
+  - `tools/make_lite_tpk.py`: Nuevo empaquetador que genera `opt-quiet-tizen-lite.tpk` (Package/App ID: `org.quiethome.lite`, con privilegios estándar exclusivamente) en la carpeta Downloads sin sobreescribir el TPK completo (`QuietHome-TV-1.0.0.tpk`).
+- **Funciones omitidas / limitadas en la versión Lite**:
+  - *Omitidas*: Ajuste directo de volumen y mute maestro (requieren `libcapi-media-sound-manager-tv.so.0`).
+  - *Omitidas*: Ajuste de brillo de imagen, alternador de Modo Juego y temporizador de apagado (requieren `libsettings-api.so`).
+  - *Omitidas*: Efectos de sonido de teclas nativos (`libmmfkeysound.so.0`) y comandos de sistema (`system()`).
+  - *Disponibles y funcionales*: Cambio de entradas HDMI (`org.tizen.tv-viewer` + `change_source` vía AppControl público), apertura de todas las aplicaciones del Dock y Biblioteca, acceso a Ajustes de Bluetooth/Mandos y Redes vía AppControl, navegación completa de la interfaz con escalado dinámico, temas claro/oscuro y visor de diagnóstico interno en memoria.
+- **Validación previa**:
+  - Compilación .NET 6 limpia tanto en variante Full como en variante Lite (0 errores, 0 advertencias).
+  - Empaquetado independiente generado exitosamente: `C:\Users\Jorge\Downloads\opt-quiet-tizen-lite.tpk` (3,293,525 bytes) coexistiendo con `QuietHome-TV-1.0.0.tpk` (3,294,637 bytes).
+- **Resultado en TV del dueño (Punto de control 6)**:
+  - *Pendiente de prueba y validación por el dueño en su hardware real.*
+

@@ -16,6 +16,7 @@ def main():
     parser.add_argument("--dotnet", default=default_dotnet)
     parser.add_argument("--framework", type=Path, default=ROOT / ".local/tv-framework")
     parser.add_argument("--container", default="CinemaGraphApp", choices=["CinemaGraphApp", "BixbyPromotion"])
+    parser.add_argument("--variant", default="full", choices=["full", "lite"], help="Build standard full variant or unprivileged lite variant")
     args = parser.parse_args()
     jobs = []
     if args.target in ("payloads", "all"):
@@ -26,29 +27,33 @@ def main():
             if not (args.framework / f"{name}.dll").is_file():
                 parser.error(f"Missing {name}.dll. Read docs/04-launcher.md; these are not bundled.")
         for name in ("Home", "QuickLaunch"):
-            jobs.append((ROOT / f"launcher/src/{name}.csproj", name, name,
-                         [f"-p:TV_FRAMEWORK_DIR={args.framework.resolve()}", f"-p:LAUNCHER_ASSEMBLY_NAME={args.container}"]))
+            extra = [f"-p:TV_FRAMEWORK_DIR={args.framework.resolve()}", f"-p:LAUNCHER_ASSEMBLY_NAME={args.container}"]
+            if args.variant == "lite":
+                extra.append("-p:VARIANT=Lite")
+            jobs.append((ROOT / f"launcher/src/{name}.csproj", name, name, extra))
         jobs.append((ROOT / "launcher/probe/Probe.csproj", "Probe", "Probe", []))
+    build_dir = ROOT / (".local/build-lite" if args.variant == "lite" else ".local/build")
+    obj_dir = ROOT / (".local/obj-lite" if args.variant == "lite" else ".local/obj")
     for project, output, intermediate, extra in jobs:
         subprocess.run([
             args.dotnet, "build", str(project), "-c", "Release", "--nologo",
-            "-o", str(ROOT / ".local/build" / output),
-            f"-p:BaseIntermediateOutputPath={ROOT / '.local/obj' / intermediate}/",
+            "-o", str(build_dir / output),
+            f"-p:BaseIntermediateOutputPath={obj_dir / intermediate}/",
             "-p:Deterministic=true",
             f"-p:PathMap={ROOT}=/_/quiet-tizen", *extra,
         ], check=True, env={**os.environ, "DOTNET_CLI_TELEMETRY_OPTOUT": "1"})
     if args.target in ("launcher", "all"):
-        destination = ROOT / ".local/package"
+        destination = ROOT / (".local/package-lite" if args.variant == "lite" else ".local/package")
         destination.mkdir(parents=True, exist_ok=True)
-        launcher_dll = ROOT / f".local/build/Home/{args.container}.dll"
+        launcher_dll = build_dir / f"Home/{args.container}.dll"
         shutil.copyfile(launcher_dll, destination / f"{args.container}.dll")
-        runtime_config = ROOT / f".local/build/Home/{args.container}.runtimeconfig.json"
+        runtime_config = build_dir / f"Home/{args.container}.runtimeconfig.json"
         if runtime_config.is_file():
             shutil.copyfile(runtime_config, destination / f"{args.container}.runtimeconfig.json")
-        if args.container != "BixbyPromotion" and (ROOT / ".local/build/Home/BixbyPromotion.dll").is_file():
-            shutil.copyfile(ROOT / ".local/build/Home/BixbyPromotion.dll", destination / "BixbyPromotion.dll")
-        shutil.copyfile(ROOT / ".local/build/QuickLaunch/QuickLaunch.dll", destination / "QuickLaunch.dll")
-        shutil.copyfile(ROOT / ".local/build/Probe/Probe.dll", destination / "Probe.dll")
+        if args.container != "BixbyPromotion" and (build_dir / "Home/BixbyPromotion.dll").is_file():
+            shutil.copyfile(build_dir / "Home/BixbyPromotion.dll", destination / "BixbyPromotion.dll")
+        shutil.copyfile(build_dir / "QuickLaunch/QuickLaunch.dll", destination / "QuickLaunch.dll")
+        shutil.copyfile(build_dir / "Probe/Probe.dll", destination / "Probe.dll")
         assets = destination / "quiet-home"
         if assets.exists():
             shutil.rmtree(assets)
@@ -57,7 +62,7 @@ def main():
         if local_catalog.exists():
             shutil.copyfile(local_catalog, assets / "apps.json")
         (assets / "apps.local.json").unlink(missing_ok=True)
-        print("Deployable files: .local/package/. Review the catalog and input mapping before use.")
+        print(f"Deployable files: {destination}. Review the catalog and input mapping before use.")
 
 
 if __name__ == "__main__":

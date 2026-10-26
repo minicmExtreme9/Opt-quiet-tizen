@@ -5,34 +5,19 @@ using System.Runtime.InteropServices;
 /// Encapsulates native Tizen platform P/Invoke calls and runtime capability detection.
 /// Safely probes platform libraries at startup so the launcher can gracefully
 /// adapt UI controls and fallbacks without crashing on missing libraries.
+/// In UNPRIVILEGED_LITE mode, all privileged Samsung libraries and system calls are excluded,
+/// leaving ONLY standard public app_control available.
 /// </summary>
 public static class NativeCapabilities
 {
     internal static class NativeMethods
     {
+#if !UNPRIVILEGED_LITE
         [DllImport("libsource-api.so")]
         public static extern int connect_source(int sourceType);
 
         [DllImport("libvconf.so.0")]
         public static extern int vconf_get_int(string key, out int value);
-
-        [DllImport("libcapi-appfw-app-control.so.0")]
-        public static extern int app_control_create(out IntPtr app);
-
-        [DllImport("libcapi-appfw-app-control.so.0")]
-        public static extern int app_control_set_app_id(IntPtr app, string id);
-
-        [DllImport("libcapi-appfw-app-control.so.0")]
-        public static extern int app_control_set_operation(IntPtr app, string operation);
-
-        [DllImport("libcapi-appfw-app-control.so.0")]
-        public static extern int app_control_add_extra_data(IntPtr app, string key, string value);
-
-        [DllImport("libcapi-appfw-app-control.so.0")]
-        public static extern int app_control_send_launch_request(IntPtr app, IntPtr cb, IntPtr data);
-
-        [DllImport("libcapi-appfw-app-control.so.0")]
-        public static extern int app_control_destroy(IntPtr app);
 
         [DllImport("libc.so.6")]
         public static extern int system(string command);
@@ -63,8 +48,39 @@ public static class NativeCapabilities
 
         [DllImport("libsettings-api.so")]
         public static extern bool CSharpGetItemMinMaxStepValue(string id, out double min, out double max, out double step);
+#endif
+
+        // Public AppControl P/Invokes (available in all profiles)
+        [DllImport("libcapi-appfw-app-control.so.0")]
+        public static extern int app_control_create(out IntPtr app);
+
+        [DllImport("libcapi-appfw-app-control.so.0")]
+        public static extern int app_control_set_app_id(IntPtr app, string id);
+
+        [DllImport("libcapi-appfw-app-control.so.0")]
+        public static extern int app_control_set_operation(IntPtr app, string operation);
+
+        [DllImport("libcapi-appfw-app-control.so.0")]
+        public static extern int app_control_add_extra_data(IntPtr app, string key, string value);
+
+        [DllImport("libcapi-appfw-app-control.so.0")]
+        public static extern int app_control_send_launch_request(IntPtr app, IntPtr cb, IntPtr data);
+
+        [DllImport("libcapi-appfw-app-control.so.0")]
+        public static extern int app_control_destroy(IntPtr app);
     }
 
+#if UNPRIVILEGED_LITE
+    public static bool IsLiteVariant => true;
+    public static bool HasSoundManager => false;
+    public static bool HasSettingsApi => false;
+    public static bool HasAppControl { get; private set; }
+    public static bool HasVconf => false;
+    public static bool HasKeySound => false;
+    public static bool HasSourceApi => false;
+    public static bool HasSystemCommand => false;
+#else
+    public static bool IsLiteVariant => false;
     // Subsystem availability cached once at startup
     public static bool HasSoundManager { get; private set; }
     public static bool HasSettingsApi { get; private set; }
@@ -73,6 +89,7 @@ public static class NativeCapabilities
     public static bool HasKeySound { get; private set; }
     public static bool HasSourceApi { get; private set; }
     public static bool HasSystemCommand { get; private set; }
+#endif
 
     // Feature-level availability flags
     public static bool HasVolume => HasSoundManager;
@@ -92,6 +109,7 @@ public static class NativeCapabilities
         if (_initialized) return;
         _initialized = true;
 
+#if !UNPRIVILEGED_LITE
         // Probe SoundManager (volume and mute)
         try
         {
@@ -118,6 +136,7 @@ public static class NativeCapabilities
             HasSettingsApi = false;
             DebugLog.Warn("Native", "SettingsApi probe failed", ex);
         }
+#endif
 
         // Probe AppControl (source switching, app launching)
         try
@@ -140,6 +159,7 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "AppControl probe failed", ex);
         }
 
+#if !UNPRIVILEGED_LITE
         // Probe Vconf (system source type query)
         try
         {
@@ -190,12 +210,18 @@ public static class NativeCapabilities
         }
 
         DebugLog.Info("Native", $"Probed capabilities: Sound={HasSoundManager}, Settings={HasSettingsApi}, AppControl={HasAppControl}, Vconf={HasVconf}");
+#else
+        DebugLog.Info("Native", $"Initialized in UNPRIVILEGED LITE mode. AppControl={HasAppControl}");
+#endif
     }
 
     // Volume & Mute Wrappers
     public static bool GetMasterVolume(out int volume)
     {
         volume = -1;
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSoundManager) return false;
         try
         {
@@ -211,10 +237,14 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "GetMasterVolume failed", ex);
         }
         return false;
+#endif
     }
 
     public static bool SetMasterVolume(int volume)
     {
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSoundManager) return false;
         try
         {
@@ -225,11 +255,15 @@ public static class NativeCapabilities
             DebugLog.Error("Native", "SetMasterVolume failed", ex);
             return false;
         }
+#endif
     }
 
     public static bool GetMasterMute(out int mute)
     {
         mute = -1;
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSoundManager) return false;
         try
         {
@@ -245,10 +279,14 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "GetMasterMute failed", ex);
         }
         return false;
+#endif
     }
 
     public static bool SetMasterMute(int mute)
     {
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSoundManager) return false;
         try
         {
@@ -259,6 +297,7 @@ public static class NativeCapabilities
             DebugLog.Error("Native", "SetMasterMute failed", ex);
             return false;
         }
+#endif
     }
 
     // Settings API Wrappers
@@ -266,6 +305,9 @@ public static class NativeCapabilities
     {
         name = null;
         value = null;
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSettingsApi) return false;
         try
         {
@@ -276,10 +318,14 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "GetItemValue failed for " + id, ex);
             return false;
         }
+#endif
     }
 
     public static bool SetItemValue(string id, string value)
     {
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSettingsApi) return false;
         try
         {
@@ -290,11 +336,15 @@ public static class NativeCapabilities
             DebugLog.Error("Native", "SetItemValue failed for " + id, ex);
             return false;
         }
+#endif
     }
 
     public static bool GetItemEnable(string id, out bool enabled)
     {
         enabled = false;
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSettingsApi) return false;
         try
         {
@@ -305,11 +355,15 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "GetItemEnable failed for " + id, ex);
             return false;
         }
+#endif
     }
 
     public static bool GetItemMinMaxStepValue(string id, out double min, out double max, out double step)
     {
         min = 0; max = 50; step = 1;
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasSettingsApi) return false;
         try
         {
@@ -320,12 +374,16 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "GetItemMinMaxStepValue failed for " + id, ex);
             return false;
         }
+#endif
     }
 
     // Vconf Wrapper
     public static bool GetVconfInt(string key, out int value)
     {
         value = 0;
+#if UNPRIVILEGED_LITE
+        return false;
+#else
         if (!HasVconf) return false;
         try
         {
@@ -336,11 +394,13 @@ public static class NativeCapabilities
             DebugLog.Warn("Native", "GetVconfInt failed for " + key, ex);
             return false;
         }
+#endif
     }
 
     // KeySound Wrapper
     public static void PlayKeySound(string filename, int type = 0)
     {
+#if !UNPRIVILEGED_LITE
         if (!HasKeySound) return;
         try
         {
@@ -350,9 +410,10 @@ public static class NativeCapabilities
         {
             DebugLog.Warn("Native", "PlayKeySound failed for " + filename, ex);
         }
+#endif
     }
 
-    // App Control & Source Switching Wrappers
+    // App Control & Source Switching Wrappers (Public Tizen API)
     public static int SwitchHdmiSource(int source)
     {
         if (!HasAppControl)
@@ -433,6 +494,9 @@ public static class NativeCapabilities
 
     public static int ExecuteSystem(string command)
     {
+#if UNPRIVILEGED_LITE
+        return -1;
+#else
         if (!HasSystemCommand) return -1;
         try
         {
@@ -443,5 +507,6 @@ public static class NativeCapabilities
             DebugLog.Error("Native", "ExecuteSystem exception for " + command, ex);
             return -1;
         }
+#endif
     }
 }

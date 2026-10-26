@@ -3,6 +3,7 @@
   <OutputType>Exe</OutputType><TargetFramework>net6.0</TargetFramework>
   <AssemblyName Condition="'$(LAUNCHER_ASSEMBLY_NAME)' == ''">CinemaGraphApp</AssemblyName>
   <AssemblyName Condition="'$(LAUNCHER_ASSEMBLY_NAME)' != ''">$(LAUNCHER_ASSEMBLY_NAME)</AssemblyName>
+  <DefineConstants Condition="'$(VARIANT)' == 'Lite'">$(DefineConstants);UNPRIVILEGED_LITE</DefineConstants>
   <UseAppHost>false</UseAppHost><EnableDefaultCompileItems>false</EnableDefaultCompileItems><DebugType>none</DebugType><ImplicitUsings>disable</ImplicitUsings><Nullable>disable</Nullable>
   <Optimize>true</Optimize>
   <ServerGarbageCollection>false</ServerGarbageCollection>
