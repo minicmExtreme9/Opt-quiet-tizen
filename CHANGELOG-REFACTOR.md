@@ -97,5 +97,6 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Compilación .NET 6 limpia tanto en variante Full como en variante Lite (0 errores, 0 advertencias).
   - Empaquetado independiente generado exitosamente: `C:\Users\Jorge\Downloads\opt-quiet-tizen-lite.tpk` (3,293,525 bytes) coexistiendo con `QuietHome-TV-1.0.0.tpk` (3,294,637 bytes).
 - **Resultado en TV del dueño (Punto de control 6)**:
-  - *Pendiente de prueba y validación por el dueño en su hardware real.*
+  - Verificado y confirmado en Samsung Smart TV real (QLED). La variante Lite responde fluidamente sin errores (0 errores, 0 avisos en el visor de diagnóstico).
+  - Confirmado el cambio de fuentes HDMI (`source_switch` exitoso mediante `app_control` público), apertura y retorno rápido de apps sin bloqueos ni congelamientos, reorganización limpia de los Ajustes Rápidos disponibles y coexistencia independiente del paquete `opt-quiet-tizen-lite.tpk`.
 
