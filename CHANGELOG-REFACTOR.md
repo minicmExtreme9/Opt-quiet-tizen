@@ -100,3 +100,16 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Verificado y confirmado en Samsung Smart TV real (QLED). La variante Lite responde fluidamente sin errores (0 errores, 0 avisos en el visor de diagnóstico).
   - Confirmado el cambio de fuentes HDMI (`source_switch` exitoso mediante `app_control` público), apertura y retorno rápido de apps sin bloqueos ni congelamientos, reorganización limpia de los Ajustes Rápidos disponibles y coexistencia independiente del paquete `opt-quiet-tizen-lite.tpk`.
 
+
+---
+
+## AUDITORÍA Y SIMPLIFICACIÓN — Eliminación de redundancia de triple escritura (Persistencia única en /opt/usr/home/owner/data/)
+- **Análisis técnico y evidencia de rutas**:
+  - `Root + "apps.json"` (`/opt/usr/apps/com.samsung.tv.CinemaGraphApp/res/quiet-home/apps.json`): Pertenece a UID `201:root`, permisos `644`, etiqueta SMACK `User::Pkg::com.samsung.tv.CinemaGraphApp::RO`. El launcher corre como UID `5001` (`owner`), por lo que cualquier intento de escritura en runtime siempre falla arrojando `UnauthorizedAccessException`. Es estrictamente un recurso semilla (seed) de solo lectura instalado con el paquete.
+  - `/tmp/quiet-home-apps.json`: Montaje `tmpfs` en RAM volátil. Se borra tras un reinicio o ciclo de energía del televisor, por lo que no aporta persistencia real entre sesiones y constituía un remanente innecesario.
+  - `/opt/usr/home/owner/data/quiet-home-apps.json`: Directorio estándar de datos de usuario en Tizen OS (`5001:users`, permisos `777` en flash persistente). Sobrevive a reinicios del televisor, suspensión y actualizaciones de binarios.
+- **Decisión y cambios aplicados**:
+  - **Eliminación de la triple escritura**: Se suprimieron las escrituras redundantes a `/tmp/quiet-home-apps.json` y al bundle local.
+  - **Fuente única de verdad**: `SaveLibrary()` en `Home.cs` escribe únicamente a `/opt/usr/home/owner/data/quiet-home-apps.json`.
+  - **Carga limpia en startup**: Al iniciar, `Home.cs` comprueba si existe `/opt/usr/home/owner/data/quiet-home-apps.json` y lo carga. Si no existe (primera ejecución tras instalación limpia), carga el catálogo semilla por defecto desde `Root + "apps.json"`.
+  - **Alineación con SettingsStore**: `SettingsStore.cs` y la persistencia de configuración general (`quiet-home-config.json`) fueron unificados bajo el mismo esquema de fuente única en `/opt/usr/home/owner/data/quiet-home-config.json` con plantilla fallback de solo lectura en el bundle, eliminando también escrituras paralelas a `/tmp`.

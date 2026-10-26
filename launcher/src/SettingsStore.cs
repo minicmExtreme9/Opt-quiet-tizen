@@ -55,40 +55,16 @@ public static class SettingsStore
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    public static LauncherSettings Load(params string[] paths)
+    public static LauncherSettings Load(string primaryPath, string fallbackTemplatePath = null)
     {
-        if (paths == null || paths.Length == 0)
-            return new LauncherSettings();
-
-        string bestPath = null;
-        DateTime bestTime = DateTime.MinValue;
-
-        foreach (var path in paths)
-        {
-            if (!string.IsNullOrEmpty(path) && File.Exists(path))
-            {
-                try
-                {
-                    var t = File.GetLastWriteTimeUtc(path);
-                    if (bestPath == null || t > bestTime)
-                    {
-                        bestPath = path;
-                        bestTime = t;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    DebugLog.Warn("SettingsStore", $"Timestamp check failed for {path}", ex);
-                }
-            }
-        }
-
-        if (string.IsNullOrEmpty(bestPath))
+        string path = File.Exists(primaryPath) ? primaryPath : 
+                      (!string.IsNullOrEmpty(fallbackTemplatePath) && File.Exists(fallbackTemplatePath) ? fallbackTemplatePath : null);
+        if (string.IsNullOrEmpty(path))
             return new LauncherSettings();
 
         try
         {
-            string raw = File.ReadAllText(bestPath).Trim();
+            string raw = File.ReadAllText(path).Trim();
             if (string.IsNullOrEmpty(raw))
                 return new LauncherSettings();
 
@@ -101,48 +77,37 @@ public static class SettingsStore
             }
             catch (Exception ex)
             {
-                DebugLog.Warn("SettingsStore", $"Typed deserialization failed on {bestPath}, attempting legacy migration", ex);
+                DebugLog.Warn("SettingsStore", $"Typed deserialization failed on {path}, attempting legacy migration", ex);
             }
 
             // Legacy config detected: migrate and persist in new format
             var migrated = MigrateLegacyJson(raw);
-            Save(migrated, paths);
+            Save(migrated, primaryPath);
             return migrated;
         }
         catch (Exception ex)
         {
-            DebugLog.Error("SettingsStore", $"Failed reading settings from {bestPath}", ex);
+            DebugLog.Error("SettingsStore", $"Failed reading settings from {path}", ex);
             return new LauncherSettings();
         }
     }
 
-    public static void Save(LauncherSettings settings, params string[] paths)
+    public static void Save(LauncherSettings settings, string primaryPath)
     {
-        if (settings == null || paths == null || paths.Length == 0) return;
+        if (settings == null || string.IsNullOrEmpty(primaryPath)) return;
         try
         {
             string json = JsonSerializer.Serialize(settings, JsonOptions);
-            foreach (var path in paths)
+            string dir = Path.GetDirectoryName(primaryPath);
+            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
             {
-                if (string.IsNullOrEmpty(path)) continue;
-                try
-                {
-                    string dir = Path.GetDirectoryName(path);
-                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-                    {
-                        Directory.CreateDirectory(dir);
-                    }
-                    File.WriteAllText(path, json);
-                }
-                catch (Exception ex)
-                {
-                    DebugLog.Warn("SettingsStore", $"Failed saving settings to {path}", ex);
-                }
+                Directory.CreateDirectory(dir);
             }
+            File.WriteAllText(primaryPath, json);
         }
         catch (Exception ex)
         {
-            DebugLog.Error("SettingsStore", "Serialization failed in Save", ex);
+            DebugLog.Error("SettingsStore", $"Failed saving settings to {primaryPath}", ex);
         }
     }
 

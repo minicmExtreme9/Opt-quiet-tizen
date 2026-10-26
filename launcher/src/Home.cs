@@ -12,10 +12,8 @@ public sealed class QuietHome : NUIApplication
 {
  static readonly string Root=System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,"..","res","quiet-home"))+"/";
  const string StateFile="/tmp/quiet-home-state.txt";
- const string ConfigOwnerPath="/opt/usr/home/owner/data/quiet-home-config.json";
- const string ConfigTmpPath="/tmp/quiet-home-config.json";
- const string AppsOwnerPath="/opt/usr/home/owner/data/quiet-home-apps.json";
- const string AppsTmpPath="/tmp/quiet-home-apps.json";
+ const string ConfigPath="/opt/usr/home/owner/data/quiet-home-config.json";
+ const string AppsDataPath="/opt/usr/home/owner/data/quiet-home-apps.json";
 
  sealed class Slot { public View Card,Shadow,FocusRing; public TextLabel Label,Desc; public string Name,Action,Description; public int Row,X,Y,W,H; }
  sealed class CachedArtwork { public ImageView Image; public View Parent; }
@@ -139,28 +137,12 @@ public sealed class QuietHome : NUIApplication
   }
   LoadConfig();
   try{
-   string bestAppsPath = null;
-   DateTime bestAppsTime = DateTime.MinValue;
-   foreach(var p in new[] { AppsOwnerPath, AppsTmpPath, Root + "apps.json" }) {
-    if (File.Exists(p)) {
-     try {
-      var t = File.GetLastWriteTimeUtc(p);
-      if (bestAppsPath == null || t > bestAppsTime) {
-       bestAppsPath = p;
-       bestAppsTime = t;
-      }
-     } catch (Exception ex) {
-      DebugLog.Warn("Library", "Timestamp check failed for " + p, ex);
-     }
-    }
-   }
-   if (bestAppsPath != null) {
-    library = AppLibrary.Load(bestAppsPath);
-   } else {
-    library = AppLibrary.Load(Root + "apps.json");
-   }
+   if(File.Exists(AppsDataPath))
+    library=AppLibrary.Load(AppsDataPath);
+   else
+    library=AppLibrary.Load(Root+"apps.json");
   }catch(Exception ex){
-   DebugLog.Warn("Library", "Primary apps load failed, trying fallback", ex);
+   DebugLog.Warn("Library", "Primary apps load failed, trying bundle fallback", ex);
    try{
     library=AppLibrary.Load(Root+"apps.json");
    }catch(Exception ex2){
@@ -180,7 +162,7 @@ public sealed class QuietHome : NUIApplication
  void LoadConfig()
  {
   try{
-   var cfg = SettingsStore.Load(ConfigOwnerPath, ConfigTmpPath, Root + "config.json");
+   var cfg = SettingsStore.Load(ConfigPath, Root + "config.json");
    if (!string.IsNullOrEmpty(cfg.Lang)) {
     int idx = Array.IndexOf(LanguageCodes, cfg.Lang);
     if (idx >= 0) currentLang = idx;
@@ -222,7 +204,7 @@ public sealed class QuietHome : NUIApplication
     Hdmi3Name = hdmiNames[2],
     Hdmi3Desc = hdmiDescs[2]
    };
-   SettingsStore.Save(cfg, ConfigOwnerPath, ConfigTmpPath, Root + "config.json");
+   SettingsStore.Save(cfg, ConfigPath);
   }catch(Exception ex){DebugLog.Error("Config", "SaveConfig failed", ex);ShowError("Failed to save launcher settings.");}
  }
 
@@ -925,13 +907,11 @@ public sealed class QuietHome : NUIApplication
 
  void SaveLibrary()
  {
-  foreach(var p in new[] { AppsOwnerPath, AppsTmpPath, Root + "apps.json" })
-  {
-   try{
-    AppLibrary.Save(p, library);
-   }catch(Exception ex){
-    DebugLog.Warn("Library", "SaveLibrary path failed: " + p, ex);
-   }
+  try{
+   AppLibrary.Save(AppsDataPath, library);
+  }catch(Exception ex){
+   DebugLog.Error("Library", "SaveLibrary failed", ex);
+   ShowError("Save apps failed: " + ex.Message);
   }
  }
 
