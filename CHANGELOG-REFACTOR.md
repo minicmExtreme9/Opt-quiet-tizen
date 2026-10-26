@@ -46,4 +46,4 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Tests de sondeo ejecutados: verificado el comportamiento de fallback seguro en entornos donde las bibliotecas nativas de Tizen no están presentes.
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 3)**:
-  - *Pendiente de validación en hardware real por el dueño.*
+  - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). Todos los controles respondieron correctamente (volumen, brillo, modo juego, temporizador de apagado y cambio de fuente HDMI).
