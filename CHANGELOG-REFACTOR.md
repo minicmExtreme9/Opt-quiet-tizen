@@ -63,3 +63,16 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 4)**:
   - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). El visor del Debug Log abrió perfectamente en pantalla mostrando "0 errores, 0 avisos". Se comprobó además que la tarjeta no funcional de Modo Juego fue ocultada limpiamente y que "Vincular mando" abrió directamente el emparejamiento Bluetooth.
+
+
+---
+
+## PASO 5 — Layout dinámico por resolución
+- **Archivos creados / modificados**:
+  - `launcher/src/Home.cs`: Reemplazadas todas las dimensiones fijas y coordenadas absolutas por propiedades dinámicas calculadas a partir de `Window.Default.WindowSize` (`ScreenWidth`, `ScreenHeight`, `ScaleX`, `ScaleY`, `ScaleFont`, `SclX`, `SclY`, `SclF`). Aplicado escalado en fondos, contenedores animados, tarjetas hero/portrait de HDMI, estante y dock de apps, cuadrícula de biblioteca (Página 1), tarjetas de configuración rápida (Página 2), botones de la barra de herramientas y textos del pie de página.
+- **Validación previa**:
+  - Compilación .NET 6 limpia (0 errores, 0 advertencias).
+  - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
+  - Desplegado y lanzado en el televisor (PID: 16257).
+- **Resultado en TV del dueño (Punto de control 5)**:
+  - *Pendiente de confirmación visual en la resolución real del hardware del dueño.*

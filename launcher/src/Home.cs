@@ -281,6 +281,16 @@ public sealed class QuietHome : NUIApplication
  void RefreshSource(){try{int n;if(NativeCapabilities.GetVconfInt("memory/system/source_type",out n)&&n>=13&&n<=16)lastSource=n;}catch(Exception ex){DebugLog.Warn("Source", "RefreshSource failed", ex);}}
  int SourceIndex(){return lastSource==14?1:lastSource==15?2:0;}
 
+ int ScreenWidth => (Window.Default.WindowSize.Width > 0) ? Window.Default.WindowSize.Width : 1920;
+ int ScreenHeight => (Window.Default.WindowSize.Height > 0) ? Window.Default.WindowSize.Height : 1080;
+ float ScaleX => ScreenWidth / 1920f;
+ float ScaleY => ScreenHeight / 1080f;
+ float ScaleFont => Math.Min(ScaleX, ScaleY);
+
+ int SclX(int x) => (int)Math.Round(x * ScaleX);
+ int SclY(int y) => (int)Math.Round(y * ScaleY);
+ float SclF(float pt) => (float)Math.Round(pt * ScaleFont);
+
  View Add(View v){scene.Add(v);if(pageContainer!=null)pageContainer.Add(v);else Window.Default.Add(v);return v;}
  View AddWindow(View v){scene.Add(v);Window.Default.Add(v);return v;}
  View Panel(int x,int y,int w,int h,Color color,int radius=18){return Add(new View{Position2D=new Position2D(x,y),Size2D=new Size2D(w,h),BackgroundColor=color,CornerRadius=new Vector4(radius,radius,radius,radius)});}
@@ -301,7 +311,7 @@ public sealed class QuietHome : NUIApplication
   foreach(var v in scene){Window.Default.Remove(v);v.Dispose();}scene.Clear();slots.Clear();
   pageContainer=null;
   Window.Default.BackgroundColor=bg;
-  AddWindow(new ImageView{ResourceUrl=Root+(darkMode?"free-background-dark.svg":"free-background.svg"),Size2D=new Size2D(1920,1080)});
+  AddWindow(new ImageView{ResourceUrl=Root+(darkMode?"free-background-dark.svg":"free-background.svg"),Size2D=new Size2D(ScreenWidth,ScreenHeight)});
   
   tabs=new TextLabel[3];
   string[] nav={T("inputs"), T("apps"), T("settings")};
@@ -313,16 +323,16 @@ public sealed class QuietHome : NUIApplication
     if(c >= 0x0600) { isWide = true; break; }
    }
    int charW = isWide ? 26 : 18;
-   int tabW = Math.Max(120, charCount * charW + 52);
-   tabs[i] = TextWindow(nav[i], curTabX, 158, tabW, 68, 30, muted);
+   int tabW = Math.Max(SclX(120), charCount * SclX(charW) + SclX(52));
+   tabs[i] = TextWindow(nav[i], curTabX, SclY(158), tabW, SclY(68), SclF(30), muted);
    tabs[i].HorizontalAlignment = HorizontalAlignment.Center;
-   curTabX += tabW + 16;
+   curTabX += tabW + SclX(16);
   }
-  clock=TextWindow(GetFormattedDate(),1180,170,660,45,24,muted);clock.HorizontalAlignment=HorizontalAlignment.End;
+  clock=TextWindow(GetFormattedDate(),SclX(1180),SclY(170),SclX(660),SclY(45),SclF(24),muted);clock.HorizontalAlignment=HorizontalAlignment.End;
 
   pageContainer=new View{
-   Size2D=new Size2D(1920,1080),
-   Position=new Position(960,540,0),
+   Size2D=new Size2D(ScreenWidth,ScreenHeight),
+   Position=new Position(ScreenWidth/2f,ScreenHeight/2f,0),
    PivotPoint=new Position(0.5f,0.5f,0.5f),
    PositionUsesPivotPoint=true,
    BackgroundColor=new Color(0,0,0,0)
@@ -330,17 +340,17 @@ public sealed class QuietHome : NUIApplication
   Window.Default.Add(pageContainer);
   scene.Add(pageContainer);
 
-  var title=TextWindow(page==0?T("home"):page==1?T("your_apps"):T("quick_settings"),76,55,1350,100,76,ink,"Display");
+  var title=TextWindow(page==0?T("home"):page==1?T("your_apps"):T("quick_settings"),SclX(76),SclY(55),SclX(1350),SclY(100),SclF(76),ink,"Display");
 
   if(page==0){
    string heroAsset=GetHeroAsset(0);
-   var hero=Feature(hdmiNames[0],"hdmi:13",GetHdmiDesc(0),heroAsset,80,262,1040,442,"hero");
-   hero.Card.Add(Label(hdmiNames[0].ToUpperInvariant(),44,52,550,40,24,new Color(.86f,.91f,1,1),"Semibold"));
-   hero.Card.Add(Label(T("lets_play"),40,124,560,100,72,white,"Display"));
-   hero.Card.Add(Label($"{T("switch_to")} HDMI 1",46,246,440,48,30,new Color(.88f,.93f,1,1)));
-   Feature(hdmiNames[1],"hdmi:14",GetHdmiDesc(1),"feature-switch.png",1160,262,320,442,"portrait");
-   Feature(hdmiNames[2],"hdmi:15",GetHdmiDesc(2),"feature-hdmi.svg",1520,262,320,442,"portrait");
-   Add(new ImageView{ResourceUrl=Root+(darkMode?"glass-shelf-dark.svg":"glass-shelf.svg"),Position2D=new Position2D(0,784),Size2D=new Size2D(1920,280)});
+   var hero=Feature(hdmiNames[0],"hdmi:13",GetHdmiDesc(0),heroAsset,SclX(80),SclY(262),SclX(1040),SclY(442),"hero");
+   hero.Card.Add(Label(hdmiNames[0].ToUpperInvariant(),SclX(44),SclY(52),SclX(550),SclY(40),SclF(24),new Color(.86f,.91f,1,1),"Semibold"));
+   hero.Card.Add(Label(T("lets_play"),SclX(40),SclY(124),SclX(560),SclY(100),SclF(72),white,"Display"));
+   hero.Card.Add(Label($"{T("switch_to")} HDMI 1",SclX(46),SclY(246),SclX(440),SclY(48),SclF(30),new Color(.88f,.93f,1,1)));
+   Feature(hdmiNames[1],"hdmi:14",GetHdmiDesc(1),"feature-switch.png",SclX(1160),SclY(262),SclX(320),SclY(442),"portrait");
+   Feature(hdmiNames[2],"hdmi:15",GetHdmiDesc(2),"feature-hdmi.svg",SclX(1520),SclY(262),SclX(320),SclY(442),"portrait");
+   Add(new ImageView{ResourceUrl=Root+(darkMode?"glass-shelf-dark.svg":"glass-shelf.svg"),Position2D=new Position2D(0,SclY(784)),Size2D=new Size2D(ScreenWidth,SclY(280))});
    Dock("Netflix","app:org.tizen.netflix-app","netflix",0);
    Dock("YouTube","app:9Ur5IzDKqV.TizenYouTube","youtube",1);
    Dock("Crunchyroll","app:OGLLvqej7u.CrunchyrollWebApp","crunchyroll",2);
@@ -375,10 +385,10 @@ public sealed class QuietHome : NUIApplication
   Toolbar(T("launcher_settings"),"modal:settings","wrench",1,T("launcher_settings_desc"));
   Toolbar(T("settings"),"app:org.tizen.menu","settings",2,T("advanced"));
   Toolbar(darkMode?"Dark Mode":"Light Mode","toggle:theme",darkMode?"moon":"sun",3);
-  toolbarHint=TextWindow("",1400,170,440,45,24,ink);toolbarHint.HorizontalAlignment=HorizontalAlignment.End;
-  detail=TextWindow("",80,1030,1320,35,20,muted);
-  notice=TextWindow("",80,1008,1760,34,22,accent);
-  var hint=TextWindow(reordering?T("reorder_hint"):page==1?(AppLibrary.PageCount(library.Count)<=1?T("back_to_home")+" · Select to open":libraryPage+1<AppLibrary.PageCount(library.Count)?"Down for more apps · "+T("back_to_home"):"Up for previous apps · "+T("back_to_home")):T("back_to_input"),1310,1030,530,35,20,muted);hint.HorizontalAlignment=HorizontalAlignment.End;
+  toolbarHint=TextWindow("",SclX(1400),SclY(170),SclX(440),SclY(45),SclF(24),ink);toolbarHint.HorizontalAlignment=HorizontalAlignment.End;
+  detail=TextWindow("",SclX(80),SclY(1030),SclX(1320),SclY(35),SclF(20),muted);
+  notice=TextWindow("",SclX(80),SclY(1008),SclX(1760),SclY(34),SclF(22),accent);
+  var hint=TextWindow(reordering?T("reorder_hint"):page==1?(AppLibrary.PageCount(library.Count)<=1?T("back_to_home")+" · Select to open":libraryPage+1<AppLibrary.PageCount(library.Count)?"Down for more apps · "+T("back_to_home"):"Up for previous apps · "+T("back_to_home")):T("back_to_input"),SclX(1310),SclY(1030),SclX(530),SclY(35),SclF(20),muted);hint.HorizontalAlignment=HorizontalAlignment.End;
 
   RebuildRowCache();lastFocusedSlot=-1;
   selected=Math.Max(0,Math.Min(selected,slots.Count-1));UpdateFocus(false);
@@ -386,15 +396,15 @@ public sealed class QuietHome : NUIApplication
   if(animate){
    animContainer.Opacity=0.0f;
    animContainer.Scale=new Vector3(0.982f,0.982f,1.0f);
-   animContainer.Position=new Position(960,540+24,0);
+   animContainer.Position=new Position(ScreenWidth/2f,ScreenHeight/2f+SclY(24),0);
    title.Opacity=0.0f;
-   title.Position=new Position(76,55+4,0);
+   title.Position=new Position(SclX(76),SclY(55)+SclY(4),0);
    pageAnimation=new Animation(230);
    pageAnimation.AnimateTo(animContainer,"Opacity",1.0f,new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
    pageAnimation.AnimateTo(animContainer,"Scale",new Vector3(1.0f,1.0f,1.0f),new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
-   pageAnimation.AnimateTo(animContainer,"Position",new Position(960,540,0),new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
+   pageAnimation.AnimateTo(animContainer,"Position",new Position(ScreenWidth/2f,ScreenHeight/2f,0),new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
    pageAnimation.AnimateTo(title,"Opacity",1.0f,new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
-   pageAnimation.AnimateTo(title,"Position",new Position(76,55,0),new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
+   pageAnimation.AnimateTo(title,"Position",new Position(SclX(76),SclY(55),0),new AlphaFunction(AlphaFunction.BuiltinFunctions.EaseOut));
    pageAnimation.Play();
   }
 
@@ -409,16 +419,18 @@ public sealed class QuietHome : NUIApplication
   int start=libraryPage*AppLibrary.PageSize,count=AppLibrary.VisibleCount(library.Count,libraryPage);
   for(int i=0;i<count;i++)
   {
-   var app=library[start+i];int x=80+(i%5)*358,y=266+(i/5)*245,w=328,h=184;
-   var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-app.svg",Position2D=new Position2D(x-24,y-10),Size2D=new Size2D(w+48,h+64)});
-   var card=Panel(x+w/2,y+h/2,w,h,HexColor(app.Background),24);
+   var app=library[start+i];
+   int w=SclX(328),h=SclY(184);
+   int x=SclX(80)+(i%5)*SclX(358),y=SclY(266)+(i/5)*SclY(245);
+   var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-app.svg",Position2D=new Position2D(x-SclX(24),y-SclY(10)),Size2D=new Size2D(w+SclX(48),h+SclY(64))});
+   var card=Panel(x+w/2,y+h/2,w,h,HexColor(app.Background),SclX(24));
    card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
    AddAppArtwork(card,app,w,h);
-   var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(24,24,24,24),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+   var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24)),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
    card.Add(ring);
    slots.Add(new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=null,Name=app.Name,Action="app:"+app.Id,Description=app.Description,Row=i/5,X=x,Y=y,W=w,H=h});
   }
-  Text(library.FindAll(a=>!a.Utility).Count+" apps",80,218,500,30,21,muted);
+  Text(library.FindAll(a=>!a.Utility).Count+" apps",SclX(80),SclY(218),SclX(500),SclY(30),SclF(21),muted);
   
   // Pagination Dots / Slider Indicator: Only active if more than 1 page exists!
   if(totalPages > 1){
@@ -584,40 +596,42 @@ public sealed class QuietHome : NUIApplication
 
  void Dock(string label,string action,string asset,int n)
  {
-  int x=(int)Math.Round(80+n*(253.333+48));
-  var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-dock.svg",Position2D=new Position2D(x-24,842),Size2D=new Size2D(301,190)});
-  var card=Panel(x+126,917,253,126,new Color(0,0,0,0),22);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
+  int dockW=SclX(253),dockH=SclY(126);
+  int x=SclX(80)+n*(dockW+SclX(48));
+  var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-dock.svg",Position2D=new Position2D(x-SclX(24),SclY(842)),Size2D=new Size2D(SclX(301),SclY(190))});
+  var card=Panel(x+dockW/2,SclY(854)+dockH/2,dockW,dockH,new Color(0,0,0,0),SclX(22));card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
   string dockSvg=Root+"free-dock-"+asset+".svg";
   string dockPng=Root+"free-dock-"+asset+".png";
   if(File.Exists(dockPng)){
-   card.Add(new ImageView{ResourceUrl=dockPng,Size2D=new Size2D(253,126),FittingMode=FittingModeType.ScaleToFill,SamplingMode=SamplingModeType.BoxThenLanczos});
+   card.Add(new ImageView{ResourceUrl=dockPng,Size2D=new Size2D(dockW,dockH),FittingMode=FittingModeType.ScaleToFill,SamplingMode=SamplingModeType.BoxThenLanczos});
   }else if(File.Exists(dockSvg)){
-   card.Add(new ImageView{ResourceUrl=dockSvg,Size2D=new Size2D(253,126)});
+   card.Add(new ImageView{ResourceUrl=dockSvg,Size2D=new Size2D(dockW,dockH)});
   }else{
    var official=library.Find(a=>a.Id==action.Substring(action.IndexOf(':')+1));
-   if(official!=null){card.BackgroundColor=HexColor(official.Background);AddAppArtwork(card,official,253,126);}
-   else card.Add(new ImageView{ResourceUrl=dockSvg,Size2D=new Size2D(253,126)});
+   if(official!=null){card.BackgroundColor=HexColor(official.Background);AddAppArtwork(card,official,dockW,dockH);}
+   else card.Add(new ImageView{ResourceUrl=dockSvg,Size2D=new Size2D(dockW,dockH)});
   }
-  var ring=new View{Size2D=new Size2D(253,126),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(22,22,22,22),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  var ring=new View{Size2D=new Size2D(dockW,dockH),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(22),SclX(22),SclX(22),SclX(22)),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
-  slots.Add(new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=null,Name=label,Action=action,Description=label,Row=1,X=x,Y=854,W=253,H=126});
+  slots.Add(new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=null,Name=label,Action=action,Description=label,Row=1,X=x,Y=SclY(854),W=dockW,H=dockH});
  }
 
  void SettingsTile(string title,string action,string description,string icon,int col,int row)
  {
-  int x=80+col*450,y=262+row*332,w=410,h=286;
-  var card=Panel(x+w/2,y+h/2,w,h,new Color(0,0,0,0),24);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
+  int w=SclX(410),h=SclY(286);
+  int x=SclX(80)+col*SclX(450),y=SclY(262)+row*SclY(332);
+  var card=Panel(x+w/2,y+h/2,w,h,new Color(0,0,0,0),SclX(24));card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
   if(!quickCache.TryGetValue(icon,out var tileImg)){
-   tileImg=new ImageView{ResourceUrl=Root+"quick-"+icon+".png",Size2D=new Size2D(w,h),DesiredWidth=820,DesiredHeight=572,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(24,24,24,24)};
+   tileImg=new ImageView{ResourceUrl=Root+"quick-"+icon+".png",Size2D=new Size2D(w,h),DesiredWidth=820,DesiredHeight=572,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24))};
    quickCache[icon]=tileImg;
   }else{
    if(tileImg.GetParent()!=null)tileImg.GetParent().Remove(tileImg);
   }
   card.Add(tileImg);
-  card.Add(Label(title,26,25,348,42,29,white,"Semibold"));
-  var valLabel=Label(SettingDisplay(action),26,146,358,56,38,white,"Display");card.Add(valLabel);
-  var descLabel=Label(description,26,226,370,34,20,new Color(.95f,.96f,1,1));card.Add(descLabel);
-  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(24,24,24,24),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  card.Add(Label(title,SclX(26),SclY(25),SclX(348),SclY(42),SclF(29),white,"Semibold"));
+  var valLabel=Label(SettingDisplay(action),SclX(26),SclY(146),SclX(358),SclY(56),SclF(38),white,"Display");card.Add(valLabel);
+  var descLabel=Label(description,SclX(26),SclY(226),SclX(370),SclY(34),SclF(20),new Color(.95f,.96f,1,1));card.Add(descLabel);
+  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24)),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
   slots.Add(new Slot{Card=card,Shadow=null,FocusRing=ring,Label=valLabel,Desc=descLabel,Name=title,Action=action,Description=description,Row=row,X=x,Y=y,W=w,H=h});
  }
@@ -634,13 +648,14 @@ public sealed class QuietHome : NUIApplication
 
  void Toolbar(string label,string action,string icon,int n,string description="")
  {
-  int x=1508+n*88;
-  var card=Panel(x+34,103,68,68,new Color(0,0,0,0),34);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
-  card.Add(new ImageView{ResourceUrl=Root+(darkMode?"glass-button-dark.svg":"glass-button.svg"),Position2D=new Position2D(-16,-16),Size2D=new Size2D(100,112)});
-  card.Add(new ImageView{ResourceUrl=Root+"symbol-"+icon+".png",Color=ink,Position2D=new Position2D(19,19),Size2D=new Size2D(30,30)});
-  var ring=new View{Size2D=new Size2D(68,68),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(34,34,34,34),BorderlineWidth=3,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  int tbSize=SclX(68);
+  int x=SclX(1508)+n*SclX(88);
+  var card=Panel(x+tbSize/2,SclY(103),tbSize,tbSize,new Color(0,0,0,0),tbSize/2);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
+  card.Add(new ImageView{ResourceUrl=Root+(darkMode?"glass-button-dark.svg":"glass-button.svg"),Position2D=new Position2D(-SclX(16),-SclY(16)),Size2D=new Size2D(SclX(100),SclY(112))});
+  card.Add(new ImageView{ResourceUrl=Root+"symbol-"+icon+".png",Color=ink,Position2D=new Position2D(SclX(19),SclY(19)),Size2D=new Size2D(SclX(30),SclY(30))});
+  var ring=new View{Size2D=new Size2D(tbSize,tbSize),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(tbSize/2,tbSize/2,tbSize/2,tbSize/2),BorderlineWidth=3,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
-  slots.Add(new Slot{Card=card,FocusRing=ring,Name=label,Action=action,Description=string.IsNullOrEmpty(description)?label:description,Row=-1,X=x,Y=69,W=68,H=68});
+  slots.Add(new Slot{Card=card,FocusRing=ring,Name=label,Action=action,Description=string.IsNullOrEmpty(description)?label:description,Row=-1,X=x,Y=SclY(69),W=tbSize,H=tbSize});
  }
 
  void RebuildRowCache()
