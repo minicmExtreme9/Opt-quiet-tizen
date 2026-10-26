@@ -162,21 +162,25 @@ Before deploying to your TV, ensure your PC and TV have the following requiremen
 
 ## 🔨 Build & Install on Your Own TV
 
-Because Samsung TV firmware enforces that every `.tpk` package must be signed with a distributor certificate tied to the **DUID (Device Unique ID)** of a specific TV, **it is impossible to distribute a generic, pre-signed binary** that works across different users' devices. Every user must compile and sign the package using their own Samsung Certificate Profile.
+Because Samsung TV firmware enforces signature verification against each device's **DUID (Device Unique ID)** when installing applications normally, **it is impossible to distribute a generic, pre-signed binary** that works across different users' devices. Every user must compile and deploy according to their TV model and preferred installation path.
 
-Follow these 8 steps in order to build and install on your TV:
+Follow the common initial setup, select your variant, and proceed down the corresponding path:
 
-### Step 1: PC Prerequisites
+---
+
+### Common Setup (Both Variants)
+
+#### Step 1: PC Prerequisites
 - **.NET 6.0 SDK**: Installed and available in your terminal (`dotnet --version`). If installed in a custom location, set the `DOTNET` environment variable.
 - **Python 3.10+**: With the *"Add Python to PATH"* option enabled.
 - **Tizen Studio with TV SDK & Tools**:
   1. Download and install **Tizen Studio with IDE** from the [official Tizen Developer site](https://developer.tizen.org/development/tizen-studio/download).
   2. Open the **Tizen Package Manager** (`Tools > Package Manager`).
   3. Under the **Main SDK** tab, install `Tizen SDK tools`.
-  4. Under the **Extension SDK** tab, install `TV Extensions-6.5` (or the version matching your TV) and **Samsung Certificate Extension** (mandatory for Step 3).
-  5. Ensure that `tizen-studio/tools` and `tizen-studio/tools/ide/bin` are added to your system `PATH` so that the `sdb` and `tizen` CLI commands are accessible.
+  4. Under the **Extension SDK** tab, install `TV Extensions-6.5` (or the version matching your TV).
+  5. Ensure that `tizen-studio/tools` and `tizen-studio/tools/ide/bin` are added to your system `PATH` so that `sdb` and `tizen` CLI commands are accessible.
 
-### Step 2: Connect the TV (Developer Mode & Device Manager)
+#### Step 2: Connect the TV (Developer Mode & Device Manager)
 1. **Enable Developer Mode on your TV**:
    - Open the **Apps** panel on your television.
    - On your physical remote control (or remote app with a numeric keypad), press **`1` `2` `3` `4` `5`** in sequence.
@@ -188,15 +192,48 @@ Follow these 8 steps in order to build and install on your TV:
    - Click the **Remote Device Manager** icon (top right network icon).
    - Click **Scan** or click **+** to manually add your TV's local IP (port `26101` by default).
    - Connect to the device. Once connected, your TV will appear in the main device list.
-   - Select the TV and note down its **DUID** displayed in the *Properties* panel on the right.
+   - Select the TV and note down its **DUID** displayed in the *Properties* panel on the right (required if choosing Path A).
 
-### Step 3: Enable the Samsung Certificate Extension
+#### Step 3: Choose Which Variant to Build (Full vs Lite)
+The project provides two variants tailored to your access level and setup:
+
+| Feature | Lite Variant (`--variant lite`) | Full Variant (`--variant full`) |
+|---|---|---|
+| **Installation Mechanism** | Standard Tizen package install; requires custom Samsung certificate profile ([Path A](#path-a--building-the-lite-variant-no-root-required)) | In-place binary swap inside factory system app; requires temporary root access ([Path B](#path-b--building-the-full-variant-requires-temporary-root-access)) |
+| **Developer Certificate Needed?** | **Yes** (tied to your TV's specific DUID) | **No** (runs inside factory-signed Samsung system package) |
+| **System Modification Risk** | **Zero** (standard user-space app, fully isolated) | **Elevated** (modifies system files via root access, vulnerable to OTA patches) |
+| **App Launching (Dock & Library)** | ✅ Fully supported (public APIs) | ✅ Fully supported |
+| **HDMI Inputs (Direct source switching)** | ✅ Via public Tizen AppControl | ✅ Via public Tizen AppControl |
+| **Interactive Remote Icon Reordering** | ✅ Yes (golden ring, atomic storage) | ✅ Yes (golden ring, atomic storage) |
+| **DALi GPU UI / Dark & Light Themes** | ✅ Fluid 60 FPS | ✅ Fluid 60 FPS |
+| **On-Screen Volume & Mute Controls** | ❌ Omitted (requires private Samsung API) | ✅ Supported (`libcapi-media-sound-manager-tv`) |
+| **On-Screen Brightness & Game Mode** | ❌ Omitted (requires private Samsung API) | ✅ Supported (`libsettings-api`) |
+
+> [!IMPORTANT]
+> **Understanding the Real Trade-Off: Certificate Signing vs. Root Access**  
+> Neither variant is universally "better" or without cost; each pays a fundamentally different configuration price based on system architecture:
+> 
+> * **Lite Variant (Standard Package Installation):**  
+>   Installs as an independent, standalone Tizen package (`org.quiethome.lite`) via standard `sdb install`/`pkgcmd`. Because Tizen's package manager strictly enforces signature verification for any newly installed application, you **must** generate your own Samsung Certificate Profile bound to your television's DUID (detailed in Path A below to avoid `Check certificate error [-12]`). In exchange for this setup requirement, your TV system remains 100% untouched: zero root access, zero system file modification, and no risk of leaving device services in an unrecoverable state.
+> 
+> * **Full Variant (In-Place System Binary Replacement):**  
+>   Never passes through the Tizen package installer at all. As documented in [`recipes/install-launcher.sh`](recipes/install-launcher.sh), it directly replaces `BixbyPromotion.dll` inside a factory system application that Samsung already pre-installed and signed (`com.samsung.tv.bixby-promotion`), leveraging the temporary elevated access process in [docs/02-access.md](docs/02-access.md). Because no new package is introduced or verified by `pkgcmd`, it **does not require a personal developer certificate**. However, obtaining temporary root access carries tangible system risks: operations can potentially leave system files in an unrecoverable state if interrupted, and the mechanism relies on specific model/firmware exploits that future Samsung OTA firmware updates may patch or invalidate.
+> 
+> **Decision Guideline:** Choose **Path A (Lite)** if you prefer a safe, non-destructive installation that leaves TV system files untouched, accepting the requirement to generate a Samsung developer certificate profile. Choose **Path B (Full)** if you require on-screen volume, brightness, or game mode controls and prefer bypassing the certificate workflow, accepting the risks associated with temporary root access and modifying system app files.
+
+---
+
+### Path A — Building the Lite Variant (No Root Required)
+
+Follow these steps to build, sign, and install the self-contained package using standard Developer Mode:
+
+#### Step A.1: Enable the Samsung Certificate Extension
 1. Open **Tizen Package Manager** (`Tools > Package Manager`).
 2. Select the **Extension SDK** tab.
 3. Locate **Samsung Certificate Extension** and click **Install**.
 4. Restart Tizen Studio to ensure the extension is fully registered.
 
-### Step 4: Create Your Samsung Certificate Profile (Author + Distributor)
+#### Step A.2: Create Your Samsung Certificate Profile (Author + Distributor)
 > [!CAUTION]
 > **Critical Warning Regarding Error -12 (`Check certificate error [-12]`):**  
 > Your profile MUST contain certificates issued by **Samsung**. NEVER mix a generic Tizen developer certificate with a Samsung certificate. Both Author AND Distributor must be of type Samsung, and the distributor certificate must explicitly include your TV's DUID. Mixing certificate types or signing with a distributor that lacks your TV's DUID will cause installation to immediately abort with certificate error -12.
@@ -217,66 +254,24 @@ Follow these 8 steps in order to build and install on your TV:
    - Complete the wizard.
 8. Verify that the newly created profile shows a blue checkmark indicating it is the active default profile.
 
-### Step 5: Choose Which Variant to Build (Full vs Lite)
-The project provides two variants tailored to your access level and setup:
-
-| Feature | Lite Variant (`--variant lite`) | Full Variant (`--variant full`) |
-|---|---|---|
-| **Installation Mechanism** | Standard Tizen package install; requires custom Samsung certificate profile ([Step 4](#step-4-create-your-samsung-certificate-profile-author--distributor)) | In-place binary swap inside factory system app; requires temporary root access ([docs/02-access.md](docs/02-access.md)) |
-| **Developer Certificate Needed?** | **Yes** (tied to your TV's specific DUID) | **No** (runs inside factory-signed Samsung system package) |
-| **System Modification Risk** | **Zero** (standard user-space app, fully isolated) | **Elevated** (modifies system files via root access, vulnerable to OTA patches) |
-| **App Launching (Dock & Library)** | ✅ Fully supported (public APIs) | ✅ Fully supported |
-| **HDMI Inputs (Direct source switching)** | ✅ Via public Tizen AppControl | ✅ Via public Tizen AppControl |
-| **Interactive Remote Icon Reordering** | ✅ Yes (golden ring, atomic storage) | ✅ Yes (golden ring, atomic storage) |
-| **DALi GPU UI / Dark & Light Themes** | ✅ Fluid 60 FPS | ✅ Fluid 60 FPS |
-| **On-Screen Volume & Mute Controls** | ❌ Omitted (requires private Samsung API) | ✅ Supported (`libcapi-media-sound-manager-tv`) |
-| **On-Screen Brightness & Game Mode** | ❌ Omitted (requires private Samsung API) | ✅ Supported (`libsettings-api`) |
-
-> [!IMPORTANT]
-> **Understanding the Real Trade-Off: Certificate Signing vs. Root Access**  
-> Neither variant is universally "better" or without cost; each pays a fundamentally different configuration price based on system architecture:
-> 
-> * **Lite Variant (Standard Package Installation):**  
->   Installs as an independent, standalone Tizen package (`org.quiethome.lite`) via standard `sdb install`/`pkgcmd`. Because Tizen's package manager strictly enforces signature verification for any newly installed application, you **must** generate your own Samsung Certificate Profile bound to your television's DUID (detailed in [Step 4](#step-4-create-your-samsung-certificate-profile-author--distributor) to avoid `Check certificate error [-12]`). In exchange for this setup requirement, your TV system remains 100% untouched: zero root access, zero system file modification, and no risk of leaving device services in an unrecoverable state.
-> 
-> * **Full Variant (In-Place System Binary Replacement):**  
->   Never passes through the Tizen package installer at all. As documented in [`recipes/install-launcher.sh`](recipes/install-launcher.sh), it directly replaces `BixbyPromotion.dll` inside a factory system application that Samsung already pre-installed and signed (`com.samsung.tv.bixby-promotion`), leveraging the temporary elevated access process in [docs/02-access.md](docs/02-access.md). Because no new package is introduced or verified by `pkgcmd`, it **does not require a personal developer certificate**. However, obtaining temporary root access carries tangible system risks: operations can potentially leave system files in an unrecoverable state if interrupted, and the mechanism relies on specific model/firmware exploits that future Samsung OTA firmware updates may patch or invalidate.
-> 
-> **Decision Guideline:** Choose **Lite** if you prefer a safe, non-destructive installation that leaves TV system files untouched, accepting the requirement to generate a Samsung developer certificate profile. Choose **Full** if you require on-screen volume, brightness, or game mode controls and prefer bypassing the certificate workflow, accepting the risks associated with temporary root access and modifying system app files.
-
-### Step 6: Build with `tools/build.py`
+#### Step A.3: Build the Lite Package
 In your terminal at the root of the repository:
-
-- **To build the Lite Variant (Recommended starting point)**:
-  ```sh
-  python tools/build.py launcher --variant lite
-  ```
-  *Output: `opt-quiet-tizen-lite-unsigned.tpk`*
-
-- **To build the Full Variant**:
-  ```sh
-  python tools/build.py launcher --variant full
-  ```
-  *Output: `opt-quiet-tizen-full-unsigned.tpk`*
+```sh
+python tools/build.py launcher --variant lite
+```
+*Output: `opt-quiet-tizen-lite-unsigned.tpk`*
 
 *(Note: If your Tizen reference assemblies are not in `.local/tv-framework`, specify their path via `--framework <dir>` or by setting the `TIZEN_FRAMEWORK` environment variable).*
 
-### Step 7: Sign the Package with Your Samsung Profile
-Use the Tizen Studio CLI tool specifying the name of your profile created in Step 4:
-
+#### Step A.4: Sign the Package with Your Profile
+Sign the unsigned package using your Samsung profile:
 ```sh
-# For Lite Variant:
 tizen package -t tpk -s <YOUR_SAMSUNG_PROFILE_NAME> -- opt-quiet-tizen-lite-unsigned.tpk
-
-# For Full Variant:
-tizen package -t tpk -s <YOUR_SAMSUNG_PROFILE_NAME> -- opt-quiet-tizen-full-unsigned.tpk
 ```
+*(Alternatively, use Tizen Studio via `Tools > Package > Sign .tpk`).*
 
-Alternatively, you can use the Tizen Studio GUI via `Tools > Package > Sign .tpk`. The tool will output the signed package ready for deployment.
-
-### Step 8: Install on Your TV Using SDB
-Ensure you are connected to your TV and deploy the signed package:
-
+#### Step A.5: Install on Your TV Using SDB
+Ensure your PC is connected to your TV, then deploy:
 ```sh
 # Connect to your TV if not already connected:
 sdb connect <YOUR_TV_IP>
@@ -284,8 +279,41 @@ sdb connect <YOUR_TV_IP>
 # Install the signed package on the TV:
 sdb install opt-quiet-tizen-lite.tpk
 ```
+Done! The launcher is now installed as an app and can be launched directly from your TV's apps list.
 
-Done! The launcher is now installed on your TV and ready to launch from the apps menu.
+---
+
+### Path B — Building the Full Variant (Requires Temporary Root Access)
+
+The Full variant replaces the entry DLL of an existing system package (`com.samsung.tv.bixby-promotion`) using temporary elevated access. Because it executes inside an existing, factory-signed Samsung container, **no developer certificate or signing is required**.
+
+#### Step B.1: Verify Temporary Root Access
+Follow the instructions in [docs/02-access.md](docs/02-access.md) to confirm that your TV model and firmware support obtaining a temporary root shell (`id -u == 0`).
+
+#### Step B.2: Build the Full Package
+In your terminal at the root of the repository:
+```sh
+python tools/build.py launcher --variant full
+```
+*This compiles `BixbyPromotion.dll` and stages the launcher files into `.local/package/`.*
+
+#### Step B.3: Deploy and Install via Root Recipes
+Follow the procedure detailed in [docs/04-launcher.md](docs/04-launcher.md):
+
+1. **Create a safe system backup snapshot on the TV:**
+   ```sh
+   tv exec --script recipes/snapshot.sh --arg home-01
+   ```
+2. **Archive and stage the build payload:**
+   ```sh
+   tar -czf .local/package.tar.gz -C .local/package .
+   tv push .local/package.tar.gz package.tar.gz
+   ```
+3. **Execute the in-place replacement recipe:**
+   ```sh
+   tv exec --script recipes/install-launcher.sh --arg home-01
+   ```
+The recipe backs up the original package, swaps `BixbyPromotion.dll`, preserves the factory SMACK labels, and launches the updated launcher.
 
 ---
 
