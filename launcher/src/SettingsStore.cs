@@ -14,6 +14,9 @@ public sealed class LauncherSettings
     [JsonPropertyName("animations")]
     public bool Animations { get; set; } = true;
 
+    [JsonPropertyName("dark_mode")]
+    public bool DarkMode { get; set; } = true;
+
     [JsonPropertyName("preset0")]
     public int Preset0 { get; set; } = 0;
 
@@ -52,15 +55,40 @@ public static class SettingsStore
         ReadCommentHandling = JsonCommentHandling.Skip
     };
 
-    public static LauncherSettings Load(string primaryPath, string fallbackPath = null)
+    public static LauncherSettings Load(params string[] paths)
     {
-        string path = File.Exists(primaryPath) ? primaryPath : (File.Exists(fallbackPath) ? fallbackPath : null);
-        if (string.IsNullOrEmpty(path))
+        if (paths == null || paths.Length == 0)
+            return new LauncherSettings();
+
+        string bestPath = null;
+        DateTime bestTime = DateTime.MinValue;
+
+        foreach (var path in paths)
+        {
+            if (!string.IsNullOrEmpty(path) && File.Exists(path))
+            {
+                try
+                {
+                    var t = File.GetLastWriteTimeUtc(path);
+                    if (bestPath == null || t > bestTime)
+                    {
+                        bestPath = path;
+                        bestTime = t;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.Warn("SettingsStore", $"Timestamp check failed for {path}", ex);
+                }
+            }
+        }
+
+        if (string.IsNullOrEmpty(bestPath))
             return new LauncherSettings();
 
         try
         {
-            string raw = File.ReadAllText(path).Trim();
+            string raw = File.ReadAllText(bestPath).Trim();
             if (string.IsNullOrEmpty(raw))
                 return new LauncherSettings();
 
@@ -71,38 +99,51 @@ public static class SettingsStore
                 if (settings != null)
                     return settings;
             }
-            catch
+            catch (Exception ex)
             {
-                // Fall through to legacy migrator
+                DebugLog.Warn("SettingsStore", $"Typed deserialization failed on {bestPath}, attempting legacy migration", ex);
             }
 
             // Legacy config detected: migrate and persist in new format
             var migrated = MigrateLegacyJson(raw);
-            Save(migrated, primaryPath, fallbackPath);
+            Save(migrated, paths);
             return migrated;
         }
-        catch
+        catch (Exception ex)
         {
+            DebugLog.Error("SettingsStore", $"Failed reading settings from {bestPath}", ex);
             return new LauncherSettings();
         }
     }
 
-    public static void Save(LauncherSettings settings, string primaryPath, string fallbackPath = null)
+    public static void Save(LauncherSettings settings, params string[] paths)
     {
-        if (settings == null) return;
+        if (settings == null || paths == null || paths.Length == 0) return;
         try
         {
             string json = JsonSerializer.Serialize(settings, JsonOptions);
-            if (!string.IsNullOrEmpty(primaryPath))
+            foreach (var path in paths)
             {
-                try { File.WriteAllText(primaryPath, json); } catch {}
-            }
-            if (!string.IsNullOrEmpty(fallbackPath))
-            {
-                try { File.WriteAllText(fallbackPath, json); } catch {}
+                if (string.IsNullOrEmpty(path)) continue;
+                try
+                {
+                    string dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    File.WriteAllText(path, json);
+                }
+                catch (Exception ex)
+                {
+                    DebugLog.Warn("SettingsStore", $"Failed saving settings to {path}", ex);
+                }
             }
         }
-        catch {}
+        catch (Exception ex)
+        {
+            DebugLog.Error("SettingsStore", "Serialization failed in Save", ex);
+        }
     }
 
     public static LauncherSettings MigrateLegacyJson(string json)
@@ -112,65 +153,38 @@ public static class SettingsStore
 
         try
         {
-            string lang = ExtractJsonValue(json, "lang");
-            if (!string.IsNullOrEmpty(lang)) s.Lang = lang;
+            using var doc = JsonDocument.Parse(json);
+            var root = doc.RootElement;
+            if (root.ValueKind != JsonValueKind.Object) return s;
 
-            string snd = ExtractJsonValue(json, "sound");
-            if (!string.IsNullOrEmpty(snd)) s.Sound = snd == "true" || snd == "1";
+            if (root.TryGetProperty("lang", out var el) && el.ValueKind == JsonValueKind.String)
+                s.Lang = el.GetString();
 
-            string anim = ExtractJsonValue(json, "animations");
-            if (!string.IsNullOrEmpty(anim)) s.Animations = anim == "true" || anim == "1";
+            if (root.TryGetProperty("sound", out el))
+                s.Sound = el.ValueKind == JsonValueKind.True || (el.ValueKind == JsonValueKind.Number && el.GetInt32() != 0);
 
-            string p0 = ExtractJsonValue(json, "preset0");
-            if (int.TryParse(p0, out var v0)) s.Preset0 = v0;
+            if (root.TryGetProperty("animations", out el))
+                s.Animations = el.ValueKind == JsonValueKind.True || (el.ValueKind == JsonValueKind.Number && el.GetInt32() != 0);
 
-            string p1 = ExtractJsonValue(json, "preset1");
-            if (int.TryParse(p1, out var v1)) s.Preset1 = v1;
+            if (root.TryGetProperty("dark_mode", out el))
+                s.DarkMode = el.ValueKind == JsonValueKind.True || (el.ValueKind == JsonValueKind.Number && el.GetInt32() != 0);
 
-            string p2 = ExtractJsonValue(json, "preset2");
-            if (int.TryParse(p2, out var v2)) s.Preset2 = v2;
+            if (root.TryGetProperty("preset0", out el) && el.TryGetInt32(out var p0)) s.Preset0 = p0;
+            if (root.TryGetProperty("preset1", out el) && el.TryGetInt32(out var p1)) s.Preset1 = p1;
+            if (root.TryGetProperty("preset2", out el) && el.TryGetInt32(out var p2)) s.Preset2 = p2;
 
-            string h1n = ExtractJsonValue(json, "hdmi1_name");
-            if (!string.IsNullOrEmpty(h1n)) s.Hdmi1Name = h1n;
-
-            string h1d = ExtractJsonValue(json, "hdmi1_desc");
-            if (!string.IsNullOrEmpty(h1d)) s.Hdmi1Desc = h1d;
-
-            string h2n = ExtractJsonValue(json, "hdmi2_name");
-            if (!string.IsNullOrEmpty(h2n)) s.Hdmi2Name = h2n;
-
-            string h2d = ExtractJsonValue(json, "hdmi2_desc");
-            if (!string.IsNullOrEmpty(h2d)) s.Hdmi2Desc = h2d;
-
-            string h3n = ExtractJsonValue(json, "hdmi3_name");
-            if (!string.IsNullOrEmpty(h3n)) s.Hdmi3Name = h3n;
-
-            string h3d = ExtractJsonValue(json, "hdmi3_desc");
-            if (!string.IsNullOrEmpty(h3d)) s.Hdmi3Desc = h3d;
+            if (root.TryGetProperty("hdmi1_name", out el) && el.ValueKind == JsonValueKind.String) s.Hdmi1Name = el.GetString();
+            if (root.TryGetProperty("hdmi1_desc", out el) && el.ValueKind == JsonValueKind.String) s.Hdmi1Desc = el.GetString();
+            if (root.TryGetProperty("hdmi2_name", out el) && el.ValueKind == JsonValueKind.String) s.Hdmi2Name = el.GetString();
+            if (root.TryGetProperty("hdmi2_desc", out el) && el.ValueKind == JsonValueKind.String) s.Hdmi2Desc = el.GetString();
+            if (root.TryGetProperty("hdmi3_name", out el) && el.ValueKind == JsonValueKind.String) s.Hdmi3Name = el.GetString();
+            if (root.TryGetProperty("hdmi3_desc", out el) && el.ValueKind == JsonValueKind.String) s.Hdmi3Desc = el.GetString();
         }
-        catch {}
+        catch (Exception ex)
+        {
+            DebugLog.Warn("SettingsStore", "MigrateLegacyJson failed", ex);
+        }
 
         return s;
     }
-
-    public static string ExtractJsonValue(string json, string key)
-    {
-        int k = json.IndexOf("\"" + key + "\"");
-        if (k < 0) return "";
-        int colon = json.IndexOf(':', k);
-        if (colon < 0) return "";
-        int start = colon + 1;
-        while (start < json.Length && (json[start] == ' ' || json[start] == '\t' || json[start] == '\r' || json[start] == '\n')) start++;
-        if (start >= json.Length) return "";
-        if (json[start] == '"') {
-            int end = json.IndexOf('"', start + 1);
-            return end > start ? json.Substring(start + 1, end - start - 1) : "";
-        } else {
-            int end = start;
-            while (end < json.Length && json[end] != ',' && json[end] != '}' && json[end] != '\n') end++;
-            return json.Substring(start, end - start).Trim();
-        }
-    }
-
-    public static string EscapeJson(string s) => (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
 }

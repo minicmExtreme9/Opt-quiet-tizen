@@ -43,6 +43,11 @@ public static class AppLibrary
  {
   var options = new JsonSerializerOptions { WriteIndented = true };
   string json = JsonSerializer.Serialize(apps, options);
+  string dir = Path.GetDirectoryName(path);
+  if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+  {
+   Directory.CreateDirectory(dir);
+  }
   File.WriteAllText(path, json);
  }
  public static int PageCount(int count)=>(count+PageSize-1)/PageSize;

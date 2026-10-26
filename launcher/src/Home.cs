@@ -12,7 +12,10 @@ public sealed class QuietHome : NUIApplication
 {
  static readonly string Root=System.IO.Path.GetFullPath(System.IO.Path.Combine(System.AppDomain.CurrentDomain.BaseDirectory,"..","res","quiet-home"))+"/";
  const string StateFile="/tmp/quiet-home-state.txt";
- const string ConfigFile="/tmp/quiet-home-config.json";
+ const string ConfigOwnerPath="/opt/usr/home/owner/data/quiet-home-config.json";
+ const string ConfigTmpPath="/tmp/quiet-home-config.json";
+ const string AppsOwnerPath="/opt/usr/home/owner/data/quiet-home-apps.json";
+ const string AppsTmpPath="/tmp/quiet-home-apps.json";
 
  sealed class Slot { public View Card,Shadow,FocusRing; public TextLabel Label,Desc; public string Name,Action,Description; public int Row,X,Y,W,H; }
  sealed class CachedArtwork { public ImageView Image; public View Parent; }
@@ -136,14 +139,26 @@ public sealed class QuietHome : NUIApplication
   }
   LoadConfig();
   try{
-   string appsPath=Root+"apps.json";
-   string tmpPath="/tmp/quiet-home-apps.json";
-   if(File.Exists(tmpPath)&&File.Exists(appsPath)&&File.GetLastWriteTimeUtc(tmpPath)>File.GetLastWriteTimeUtc(appsPath))
-    library=AppLibrary.Load(tmpPath);
-   else if(File.Exists(appsPath))
-    library=AppLibrary.Load(appsPath);
-   else if(File.Exists(tmpPath))
-    library=AppLibrary.Load(tmpPath);
+   string bestAppsPath = null;
+   DateTime bestAppsTime = DateTime.MinValue;
+   foreach(var p in new[] { AppsOwnerPath, AppsTmpPath, Root + "apps.json" }) {
+    if (File.Exists(p)) {
+     try {
+      var t = File.GetLastWriteTimeUtc(p);
+      if (bestAppsPath == null || t > bestAppsTime) {
+       bestAppsPath = p;
+       bestAppsTime = t;
+      }
+     } catch (Exception ex) {
+      DebugLog.Warn("Library", "Timestamp check failed for " + p, ex);
+     }
+    }
+   }
+   if (bestAppsPath != null) {
+    library = AppLibrary.Load(bestAppsPath);
+   } else {
+    library = AppLibrary.Load(Root + "apps.json");
+   }
   }catch(Exception ex){
    DebugLog.Warn("Library", "Primary apps load failed, trying fallback", ex);
    try{
@@ -154,7 +169,6 @@ public sealed class QuietHome : NUIApplication
     ShowError("Apps error: " + ex2.Message);
    }
   }
-  try{if(File.Exists("/tmp/quiet-home-theme.txt")){string t=File.ReadAllText("/tmp/quiet-home-theme.txt").Trim();if(t=="light")darkMode=false;else if(t=="dark")darkMode=true;}}catch(Exception ex){DebugLog.Warn("Theme", "Theme read failed", ex);}
   Window.Default.BackgroundColor=bg;
   Window.Default.Title="Opt-quiet-tizen";Window.Default.KeyEvent+=OnKey;
   PreloadArtwork();
@@ -166,13 +180,14 @@ public sealed class QuietHome : NUIApplication
  void LoadConfig()
  {
   try{
-   var cfg = SettingsStore.Load(ConfigFile, Root + "config.json");
+   var cfg = SettingsStore.Load(ConfigOwnerPath, ConfigTmpPath, Root + "config.json");
    if (!string.IsNullOrEmpty(cfg.Lang)) {
     int idx = Array.IndexOf(LanguageCodes, cfg.Lang);
     if (idx >= 0) currentLang = idx;
    }
    soundEnabled = cfg.Sound;
    animationsEnabled = cfg.Animations;
+   darkMode = cfg.DarkMode;
    hdmiPresetIndex[0] = Math.Clamp(cfg.Preset0, 0, HdmiPresets.Length - 1);
    hdmiPresetIndex[1] = Math.Clamp(cfg.Preset1, 0, HdmiPresets.Length - 1);
    hdmiPresetIndex[2] = Math.Clamp(cfg.Preset2, 0, HdmiPresets.Length - 1);
@@ -196,6 +211,7 @@ public sealed class QuietHome : NUIApplication
     Lang = (currentLang >= 0 && currentLang < LanguageCodes.Length) ? LanguageCodes[currentLang] : "es",
     Sound = soundEnabled,
     Animations = animationsEnabled,
+    DarkMode = darkMode,
     Preset0 = hdmiPresetIndex[0],
     Preset1 = hdmiPresetIndex[1],
     Preset2 = hdmiPresetIndex[2],
@@ -206,7 +222,7 @@ public sealed class QuietHome : NUIApplication
     Hdmi3Name = hdmiNames[2],
     Hdmi3Desc = hdmiDescs[2]
    };
-   SettingsStore.Save(cfg, ConfigFile, Root + "config.json");
+   SettingsStore.Save(cfg, ConfigOwnerPath, ConfigTmpPath, Root + "config.json");
   }catch(Exception ex){DebugLog.Error("Config", "SaveConfig failed", ex);ShowError("Failed to save launcher settings.");}
  }
 
@@ -472,21 +488,21 @@ public sealed class QuietHome : NUIApplication
   
   // Pagination Dots / Slider Indicator: Only active if more than 1 page exists!
   if(totalPages > 1){
-   int dotSpacing = 22;
-   int dotWidth = 10;
-   int activeWidth = 26;
+   int dotSpacing = SclX(22);
+   int dotWidth = SclX(10);
+   int activeWidth = SclX(26);
    int totalW = (totalPages - 1) * (dotWidth + dotSpacing) + activeWidth;
-   int startX = 1840 - totalW;
+   int startX = SclX(1840) - totalW;
    for(int p = 0; p < totalPages; p++){
     bool isActive = p == libraryPage;
     int currW = isActive ? activeWidth : dotWidth;
     var dot = Add(new View{
-     Position2D = new Position2D(startX, 226),
-     Size2D = new Size2D(currW, 10),
+     Position2D = new Position2D(startX, SclY(226)),
+     Size2D = new Size2D(currW, SclY(10)),
      BackgroundColor = isActive ? accent : (darkMode ? new Color(1,1,1,0.25f) : new Color(0,0,0,0.25f)),
-     CornerRadius = new Vector4(5, 5, 5, 5)
+     CornerRadius = new Vector4(SclX(5), SclX(5), SclX(5), SclX(5))
     });
-    startX += currW + 12;
+    startX += currW + SclX(12);
    }
   }
  }
@@ -518,31 +534,31 @@ public sealed class QuietHome : NUIApplication
    cached.Parent.Remove(cached.Image);card.Add(cached.Image);cached.Parent=card;
   }
   if(app.Utility){
-   card.Add(new View{Position2D=new Position2D(w/2-28,h/2-2),Size2D=new Size2D(56,4),BackgroundColor=ink});
-   card.Add(new View{Position2D=new Position2D(w/2-2,h/2-28),Size2D=new Size2D(4,56),BackgroundColor=ink});
+   card.Add(new View{Position2D=new Position2D(w/2-SclX(28),h/2-SclY(2)),Size2D=new Size2D(SclX(56),SclY(4)),BackgroundColor=ink});
+   card.Add(new View{Position2D=new Position2D(w/2-SclX(2),h/2-SclY(28)),Size2D=new Size2D(SclX(4),SclY(56)),BackgroundColor=ink});
   }
  }
 
  void PreloadArtwork()
  {
-  artworkPreloadRoot=new View{Size2D=new Size2D(1920,1080),Opacity=0};
+  artworkPreloadRoot=new View{Size2D=new Size2D(ScreenWidth,ScreenHeight),Opacity=0};
   Window.Default.Add(artworkPreloadRoot);
   var preloadedHeroes=new HashSet<string>();
   foreach(var pr in HdmiPresets){
    if(preloadedHeroes.Add(pr.heroAsset))
-    PreloadFeature(pr.heroAsset,1040,442);
+    PreloadFeature(pr.heroAsset,SclX(1040),SclY(442));
   }
-  PreloadFeature("feature-switch.png",320,442);
-  PreloadFeature("feature-hdmi.svg",320,442);
+  PreloadFeature("feature-switch.png",SclX(320),SclY(442));
+  PreloadFeature("feature-hdmi.svg",SclX(320),SclY(442));
   string[] quickIcons={"volume","brightness","game","sleep","mute","controller","network","settings"};
   foreach(var icon in quickIcons){
-   var img=new ImageView{ResourceUrl=Root+"quick-"+icon+".png",Size2D=new Size2D(410,286),DesiredWidth=820,DesiredHeight=572,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(24,24,24,24)};
+   var img=new ImageView{ResourceUrl=Root+"quick-"+icon+".png",Size2D=new Size2D(SclX(410),SclY(286)),DesiredWidth=SclX(820),DesiredHeight=SclY(572),SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24))};
    quickCache[icon]=img;
    artworkPreloadRoot.Add(img);
   }
-  foreach(var app in library)if(!app.Utility)GetArtwork(app,328,184);
+  foreach(var app in library)if(!app.Utility)GetArtwork(app,SclX(328),SclY(184));
   foreach(var id in new[]{"org.tizen.netflix-app","com.samsung.tv.cobalt-yt","org.tizen.primevideo"}){
-   var app=library.Find(a=>a.Id==id);if(app!=null)GetArtwork(app,253,126);
+   var app=library.Find(a=>a.Id==id);if(app!=null)GetArtwork(app,SclX(253),SclY(126));
   }
  }
 
@@ -551,14 +567,14 @@ public sealed class QuietHome : NUIApplication
   string key=app.Id+"@"+w+"x"+h;
   if(artworkCache.TryGetValue(key,out var cached))return cached;
   bool cover=app.Fit=="cover",full=cover||app.Fit=="contain-full";
-  int iw=full?w:w-54,ih=full?h:h-40;var crop=app.Crop;
+  int iw=full?w:w-SclX(54),ih=full?h:h-SclY(40);var crop=app.Crop;
   float cropWidth=crop==null?1:crop[2],cropHeight=crop==null?1:crop[3];
   var image=new ImageView{
    Position2D=new Position2D((w-iw)/2,(h-ih)/2),Size2D=new Size2D(iw,ih),
    FittingMode=cover?FittingModeType.ScaleToFill:FittingModeType.ShrinkToFit,
    SamplingMode=SamplingModeType.BoxThenLanczos,
    DesiredWidth=(int)Math.Ceiling(iw*2/cropWidth),DesiredHeight=(int)Math.Ceiling(ih*2/cropHeight),
-   ReleasePolicy=ReleasePolicyType.Destroyed,CornerRadius=new Vector4(24,24,24,24)};
+   ReleasePolicy=ReleasePolicyType.Destroyed,CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24))};
   if(crop!=null)image.PixelArea=new RelativeVector4(crop[0],crop[1],crop[2],crop[3]);
   cached=new CachedArtwork{Image=image,Parent=artworkPreloadRoot};
   artworkCache.Add(key,cached);artworkViewsCreated++;
@@ -571,7 +587,7 @@ public sealed class QuietHome : NUIApplication
  {
   string key=asset+"@"+w+"x"+h;
   if(!featureCache.ContainsKey(key)){
-   var img=new ImageView{ResourceUrl=Root+asset,Size2D=new Size2D(w,h),DesiredWidth=w*2,DesiredHeight=h*2,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(28,28,28,28)};
+   var img=new ImageView{ResourceUrl=Root+asset,Size2D=new Size2D(w,h),DesiredWidth=w*2,DesiredHeight=h*2,SamplingMode=SamplingModeType.BoxThenLanczos,ReleasePolicy=ReleasePolicyType.Never,CornerRadius=new Vector4(SclX(28),SclX(28),SclX(28),SclX(28))};
    featureCache[key]=img;
    artworkPreloadRoot.Add(img);
   }
@@ -612,8 +628,8 @@ public sealed class QuietHome : NUIApplication
 
  Slot Feature(string label,string action,string description,string asset,int x,int y,int w,int h,string type)
  {
-  var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-"+type+".svg",Position2D=new Position2D(x-24,y-14),Size2D=new Size2D(w+48,h+64)});
-  var card=Panel(x+w/2,y+h/2,w,h,new Color(0,0,0,0),28);card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
+  var shadow=Add(new ImageView{ResourceUrl=Root+"shadow-"+type+".svg",Position2D=new Position2D(x-SclX(24),y-SclY(14)),Size2D=new Size2D(w+SclX(48),h+SclY(64))});
+  var card=Panel(x+w/2,y+h/2,w,h,new Color(0,0,0,0),SclX(28));card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
   string key=asset+"@"+w+"x"+h;
   if(!featureCache.TryGetValue(key,out var img)){
    img=new ImageView{ResourceUrl=Root+asset,Size2D=new Size2D(w,h),FittingMode=FittingModeType.ScaleToFill,SamplingMode=SamplingModeType.BoxThenLanczos};
@@ -623,10 +639,10 @@ public sealed class QuietHome : NUIApplication
    img.Size2D=new Size2D(w,h);
   }
   card.Add(img);
-  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(28,28,28,28),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(28),SclX(28),SclX(28),SclX(28)),BorderlineWidth=SclX(4),BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
-  var nameLabel=Text(label,x+4,y+h+16,w-8,36,28,captionMuted,"Semibold");
-  var descLabel=Text(description,x+4,y+h+52,w-8,30,21,descMuted);
+  var nameLabel=Text(label,x+SclX(4),y+h+SclY(16),w-SclX(8),SclY(36),SclF(28),captionMuted,"Semibold");
+  var descLabel=Text(description,x+SclX(4),y+h+SclY(52),w-SclX(8),SclY(30),SclF(21),descMuted);
   var slot=new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=nameLabel,Desc=descLabel,Name=label,Action=action,Description=description,Row=0,X=x,Y=y,W=w,H=h};
   slots.Add(slot);
   return slot;
@@ -743,7 +759,7 @@ public sealed class QuietHome : NUIApplication
    if(cur.FocusRing!=null){
     cur.FocusRing.Opacity=1;
     cur.FocusRing.BorderlineColor=reordering?reorderColor:accent;
-    cur.FocusRing.BorderlineWidth=reordering?6:4;
+    cur.FocusRing.BorderlineWidth=reordering?SclX(6):SclX(4);
     cur.FocusRing.RaiseToTop();
    }
    if(cur.Label!=null&&page!=2)cur.Label.TextColor=ink;
@@ -909,12 +925,13 @@ public sealed class QuietHome : NUIApplication
 
  void SaveLibrary()
  {
-  try{
-   AppLibrary.Save(Root+"apps.json",library);
-   AppLibrary.Save("/tmp/quiet-home-apps.json",library);
-  }catch(Exception ex){
-   DebugLog.Error("Library", "SaveLibrary failed", ex);
-   ShowError("Save apps failed: " + ex.Message);
+  foreach(var p in new[] { AppsOwnerPath, AppsTmpPath, Root + "apps.json" })
+  {
+   try{
+    AppLibrary.Save(p, library);
+   }catch(Exception ex){
+    DebugLog.Warn("Library", "SaveLibrary path failed: " + p, ex);
+   }
   }
  }
 
@@ -1000,7 +1017,7 @@ public sealed class QuietHome : NUIApplication
   }
   if(a=="toggle:theme"){
    darkMode=!darkMode;
-   try{File.WriteAllText("/tmp/quiet-home-theme.txt",darkMode?"dark":"light");}catch(Exception ex){DebugLog.Warn("Theme", "Theme toggle write failed", ex);}
+   SaveConfig();
    BuildPage(false);
    return;
   }
@@ -1023,33 +1040,33 @@ public sealed class QuietHome : NUIApplication
 
   modalOverlay=new View{
    Position2D=new Position2D(0,0),
-   Size2D=new Size2D(1920,1080),
+   Size2D=new Size2D(ScreenWidth,ScreenHeight),
    BackgroundColor=new Color(0,0,0,0.65f)
   };
 
   var box=new View{
-   Position2D=new Position2D(410,105),
-   Size2D=new Size2D(1100,870),
+   Position2D=new Position2D(SclX(410),SclY(105)),
+   Size2D=new Size2D(SclX(1100),SclY(870)),
    BackgroundColor=darkMode?new Color(0.12f,0.15f,0.22f,0.98f):new Color(0.96f,0.96f,0.98f,0.98f),
-   CornerRadius=new Vector4(28,28,28,28),
-   BorderlineWidth=3,
+   CornerRadius=new Vector4(SclX(28),SclX(28),SclX(28),SclX(28)),
+   BorderlineWidth=SclX(3),
    BorderlineColor=accent
   };
   modalOverlay.Add(box);
 
   box.Add(new TextLabel{
    Text=T("launcher_settings"),
-   Position2D=new Position2D(50,40),
-   Size2D=new Size2D(1000,50),
-   PixelSize=38,
+   Position2D=new Position2D(SclX(50),SclY(40)),
+   Size2D=new Size2D(SclX(1000),SclY(50)),
+   PixelSize=SclF(38),
    FontFamily="Quiet Inter Semibold",
    TextColor=ink
   });
   box.Add(new TextLabel{
    Text=T("modal_hint"),
-   Position2D=new Position2D(50,96),
-   Size2D=new Size2D(1000,32),
-   PixelSize=21,
+   Position2D=new Position2D(SclX(50),SclY(96)),
+   Size2D=new Size2D(SclX(1000),SclY(32)),
+   PixelSize=SclF(21),
    FontFamily="Quiet Inter Medium",
    TextColor=muted
   });
@@ -1070,13 +1087,13 @@ public sealed class QuietHome : NUIApplication
   };
 
   for(int i=0;i<8;i++){
-   int y=136+i*88;
+   int y=SclY(136)+i*SclY(88);
    var rView=new View{
-    Position2D=new Position2D(40,y),
-    Size2D=new Size2D(1020,76),
+    Position2D=new Position2D(SclX(40),y),
+    Size2D=new Size2D(SclX(1020),SclY(76)),
     BackgroundColor=i==0?(darkMode?new Color(1,1,1,0.12f):new Color(0,0,0,0.08f)):new Color(0,0,0,0),
-    CornerRadius=new Vector4(16,16,16,16),
-    BorderlineWidth=i==0?2:0,
+    CornerRadius=new Vector4(SclX(16),SclX(16),SclX(16),SclX(16)),
+    BorderlineWidth=i==0?SclX(2):0,
     BorderlineColor=accent
    };
    box.Add(rView);
@@ -1084,9 +1101,9 @@ public sealed class QuietHome : NUIApplication
 
    var lbl=new TextLabel{
     Text=rowTitles[i],
-    Position2D=new Position2D(24,14),
-    Size2D=new Size2D(440,48),
-    PixelSize=24,
+    Position2D=new Position2D(SclX(24),SclY(14)),
+    Size2D=new Size2D(SclX(440),SclY(48)),
+    PixelSize=SclF(24),
     FontFamily="Quiet Inter Semibold",
     TextColor=ink,
     VerticalAlignment=VerticalAlignment.Center
@@ -1096,9 +1113,9 @@ public sealed class QuietHome : NUIApplication
 
    var val=new TextLabel{
     Text=GetModalRowValueText(i),
-    Position2D=new Position2D(480,14),
-    Size2D=new Size2D(516,48),
-    PixelSize=22,
+    Position2D=new Position2D(SclX(480),SclY(14)),
+    Size2D=new Size2D(SclX(516),SclY(48)),
+    PixelSize=SclF(22),
     FontFamily="Quiet Inter Medium",
     TextColor=accent,
     HorizontalAlignment=HorizontalAlignment.End,
@@ -1298,34 +1315,34 @@ public sealed class QuietHome : NUIApplication
 
   debugOverlay = new View {
    Position2D = new Position2D(0, 0),
-   Size2D = new Size2D(1920, 1080),
+   Size2D = new Size2D(ScreenWidth, ScreenHeight),
    BackgroundColor = new Color(0, 0, 0, 0.88f)
   };
 
   var box = new View {
-   Position2D = new Position2D(180, 80),
-   Size2D = new Size2D(1560, 920),
+   Position2D = new Position2D(SclX(180), SclY(80)),
+   Size2D = new Size2D(SclX(1560), SclY(920)),
    BackgroundColor = darkMode ? new Color(0.10f, 0.12f, 0.18f, 0.98f) : new Color(0.96f, 0.96f, 0.98f, 0.98f),
-   CornerRadius = new Vector4(24, 24, 24, 24),
-   BorderlineWidth = 3,
+   CornerRadius = new Vector4(SclX(24), SclX(24), SclX(24), SclX(24)),
+   BorderlineWidth = SclX(3),
    BorderlineColor = accent
   };
   debugOverlay.Add(box);
 
   box.Add(new TextLabel {
    Text = $"Registro de Depuracion (Debug Log) - {DebugLog.ErrorCount} errores, {DebugLog.WarnCount} avisos",
-   Position2D = new Position2D(40, 24),
-   Size2D = new Size2D(1480, 45),
-   PixelSize = 30,
+   Position2D = new Position2D(SclX(40), SclY(24)),
+   Size2D = new Size2D(SclX(1480), SclY(45)),
+   PixelSize = SclF(30),
    FontFamily = "Quiet Inter Semibold",
    TextColor = ink
   });
 
   box.Add(new TextLabel {
    Text = "Atras (Back) o Aceptar para cerrar * Volcado guardado en /tmp/quiet-home-debuglog.txt",
-   Position2D = new Position2D(40, 72),
-   Size2D = new Size2D(1480, 30),
-   PixelSize = 18,
+   Position2D = new Position2D(SclX(40), SclY(72)),
+   Size2D = new Size2D(SclX(1480), SclY(30)),
+   PixelSize = SclF(18),
    FontFamily = "Quiet Inter Medium",
    TextColor = muted
   });
@@ -1342,9 +1359,9 @@ public sealed class QuietHome : NUIApplication
 
    box.Add(new TextLabel {
     Text = line,
-    Position2D = new Position2D(40, 115 + lineIdx * 48),
-    Size2D = new Size2D(1480, 42),
-    PixelSize = 18,
+    Position2D = new Position2D(SclX(40), SclY(115) + lineIdx * SclY(48)),
+    Size2D = new Size2D(SclX(1480), SclY(42)),
+    PixelSize = SclF(18),
     FontFamily = "Quiet Inter Medium",
     TextColor = lineCol
    });
