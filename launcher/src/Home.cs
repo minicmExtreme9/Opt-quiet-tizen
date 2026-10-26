@@ -250,77 +250,49 @@ public sealed class QuietHome : NUIApplication
  void LoadConfig()
  {
   try{
-   string path = File.Exists(ConfigFile) ? ConfigFile : Root + "config.json";
-   if (File.Exists(path)) {
-    string json = File.ReadAllText(path);
-    string lang = ExtractJsonValue(json, "lang");
-    if (!string.IsNullOrEmpty(lang)) {
-     int idx = Array.IndexOf(LanguageCodes, lang);
-     if (idx >= 0) currentLang = idx;
-    }
-    string snd = ExtractJsonValue(json, "sound");
-    if (!string.IsNullOrEmpty(snd)) soundEnabled = snd == "true" || snd == "1";
-    string anim = ExtractJsonValue(json, "animations");
-    if (!string.IsNullOrEmpty(anim)) animationsEnabled = anim == "true" || anim == "1";
-    string p0 = ExtractJsonValue(json, "preset0");
-    if (int.TryParse(p0, out var v0)) { if (v0 >= HdmiPresets.Length) v0 = HdmiPresets.Length - 1; if (v0 >= 0) hdmiPresetIndex[0] = v0; }
-    string p1 = ExtractJsonValue(json, "preset1");
-    if (int.TryParse(p1, out var v1)) { if (v1 >= HdmiPresets.Length) v1 = HdmiPresets.Length - 1; if (v1 >= 0) hdmiPresetIndex[1] = v1; }
-    string p2 = ExtractJsonValue(json, "preset2");
-    if (int.TryParse(p2, out var v2)) { if (v2 >= HdmiPresets.Length) v2 = HdmiPresets.Length - 1; if (v2 >= 0) hdmiPresetIndex[2] = v2; }
-    for(int h=0; h<3; h++) hdmiDescs[h] = GetHdmiDesc(h);
-    string h1n = ExtractJsonValue(json, "hdmi1_name"); if (!string.IsNullOrEmpty(h1n)) hdmiNames[0] = h1n;
-    string h1d = ExtractJsonValue(json, "hdmi1_desc"); if (!string.IsNullOrEmpty(h1d)) hdmiDescs[0] = h1d;
-    string h2n = ExtractJsonValue(json, "hdmi2_name"); if (!string.IsNullOrEmpty(h2n)) hdmiNames[1] = h2n;
-    string h2d = ExtractJsonValue(json, "hdmi2_desc"); if (!string.IsNullOrEmpty(h2d)) hdmiDescs[1] = h2d;
-    string h3n = ExtractJsonValue(json, "hdmi3_name"); if (!string.IsNullOrEmpty(h3n)) hdmiNames[2] = h3n;
-    string h3d = ExtractJsonValue(json, "hdmi3_desc"); if (!string.IsNullOrEmpty(h3d)) hdmiDescs[2] = h3d;
+   var cfg = SettingsStore.Load(ConfigFile, Root + "config.json");
+   if (!string.IsNullOrEmpty(cfg.Lang)) {
+    int idx = Array.IndexOf(LanguageCodes, cfg.Lang);
+    if (idx >= 0) currentLang = idx;
    }
+   soundEnabled = cfg.Sound;
+   animationsEnabled = cfg.Animations;
+   hdmiPresetIndex[0] = Math.Clamp(cfg.Preset0, 0, HdmiPresets.Length - 1);
+   hdmiPresetIndex[1] = Math.Clamp(cfg.Preset1, 0, HdmiPresets.Length - 1);
+   hdmiPresetIndex[2] = Math.Clamp(cfg.Preset2, 0, HdmiPresets.Length - 1);
+   for(int h=0; h<3; h++) {
+    hdmiNames[h] = HdmiPresets[hdmiPresetIndex[h]].name;
+    hdmiDescs[h] = GetHdmiDesc(h);
+   }
+   if (!string.IsNullOrEmpty(cfg.Hdmi1Name)) hdmiNames[0] = cfg.Hdmi1Name;
+   if (!string.IsNullOrEmpty(cfg.Hdmi1Desc)) hdmiDescs[0] = cfg.Hdmi1Desc;
+   if (!string.IsNullOrEmpty(cfg.Hdmi2Name)) hdmiNames[1] = cfg.Hdmi2Name;
+   if (!string.IsNullOrEmpty(cfg.Hdmi2Desc)) hdmiDescs[1] = cfg.Hdmi2Desc;
+   if (!string.IsNullOrEmpty(cfg.Hdmi3Name)) hdmiNames[2] = cfg.Hdmi3Name;
+   if (!string.IsNullOrEmpty(cfg.Hdmi3Desc)) hdmiDescs[2] = cfg.Hdmi3Desc;
   }catch{}
  }
 
  void SaveConfig()
  {
   try{
-   string json = "{\n" +
-    $"  \"lang\": \"{LanguageCodes[currentLang]}\",\n" +
-    $"  \"sound\": {(soundEnabled ? "true" : "false")},\n" +
-    $"  \"animations\": {(animationsEnabled ? "true" : "false")},\n" +
-    $"  \"preset0\": {hdmiPresetIndex[0]},\n" +
-    $"  \"preset1\": {hdmiPresetIndex[1]},\n" +
-    $"  \"preset2\": {hdmiPresetIndex[2]},\n" +
-    $"  \"hdmi1_name\": \"{EscapeJson(hdmiNames[0])}\",\n" +
-    $"  \"hdmi1_desc\": \"{EscapeJson(hdmiDescs[0])}\",\n" +
-    $"  \"hdmi2_name\": \"{EscapeJson(hdmiNames[1])}\",\n" +
-    $"  \"hdmi2_desc\": \"{EscapeJson(hdmiDescs[1])}\",\n" +
-    $"  \"hdmi3_name\": \"{EscapeJson(hdmiNames[2])}\",\n" +
-    $"  \"hdmi3_desc\": \"{EscapeJson(hdmiDescs[2])}\"\n" +
-    "}";
-   File.WriteAllText(ConfigFile, json);
-   try { File.WriteAllText(Root + "config.json", json); } catch {}
+   var cfg = new LauncherSettings {
+    Lang = (currentLang >= 0 && currentLang < LanguageCodes.Length) ? LanguageCodes[currentLang] : "es",
+    Sound = soundEnabled,
+    Animations = animationsEnabled,
+    Preset0 = hdmiPresetIndex[0],
+    Preset1 = hdmiPresetIndex[1],
+    Preset2 = hdmiPresetIndex[2],
+    Hdmi1Name = hdmiNames[0],
+    Hdmi1Desc = hdmiDescs[0],
+    Hdmi2Name = hdmiNames[1],
+    Hdmi2Desc = hdmiDescs[1],
+    Hdmi3Name = hdmiNames[2],
+    Hdmi3Desc = hdmiDescs[2]
+   };
+   SettingsStore.Save(cfg, ConfigFile, Root + "config.json");
   }catch{}
  }
-
- string ExtractJsonValue(string json, string key)
- {
-  int k = json.IndexOf("\"" + key + "\"");
-  if (k < 0) return "";
-  int colon = json.IndexOf(':', k);
-  if (colon < 0) return "";
-  int start = colon + 1;
-  while (start < json.Length && (json[start] == ' ' || json[start] == '\t' || json[start] == '\r' || json[start] == '\n')) start++;
-  if (start >= json.Length) return "";
-  if (json[start] == '"') {
-   int end = json.IndexOf('"', start + 1);
-   return end > start ? json.Substring(start + 1, end - start - 1) : "";
-  } else {
-   int end = start;
-   while (end < json.Length && json[end] != ',' && json[end] != '}' && json[end] != '\n') end++;
-   return json.Substring(start, end - start).Trim();
-  }
- }
-
- string EscapeJson(string s) => (s ?? "").Replace("\\", "\\\\").Replace("\"", "\\\"");
 
  protected override void OnResume()
  {

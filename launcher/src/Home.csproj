@@ -11,7 +11,7 @@
   <TieredCompilation>true</TieredCompilation>
   <TieredCompilationQuickJit>true</TieredCompilationQuickJit>
  </PropertyGroup>
- <ItemGroup><Compile Include="Home.cs" /><Compile Include="AppLibrary.cs" /></ItemGroup>
+ <ItemGroup><Compile Include="Home.cs" /><Compile Include="AppLibrary.cs" /><Compile Include="SettingsStore.cs" /></ItemGroup>
  <ItemGroup>
   <Reference Include="Tizen.NUI"><HintPath>$(TV_FRAMEWORK_DIR)/Tizen.NUI.dll</HintPath><Private>false</Private></Reference>
   <Reference Include="Tizen.Applications.Common"><HintPath>$(TV_FRAMEWORK_DIR)/Tizen.Applications.Common.dll</HintPath><Private>false</Private></Reference>
