@@ -1,4 +1,4 @@
-# Opt-quiet-tizen v1.0.1
+# Opt-quiet-tizen v2.0.0
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Original Author](https://img.shields.io/badge/Original%20Author-jss8649-informational.svg)](https://github.com/jss8649/quiet-tizen)
@@ -7,12 +7,12 @@
 [![Runtime](https://img.shields.io/badge/.NET%20Runtime-6.0-512BD4.svg)](https://dotnet.microsoft.com)
 [![Target](https://img.shields.io/badge/Target-Samsung%20Smart%20TV-1428A0.svg)](https://samsung.com)
 [![UI Performance](https://img.shields.io/badge/UI%20Performance-60%20FPS%20%7C%2092ms-brightgreen.svg)](#performance-benchmarks)
-[![Changelog](https://img.shields.io/badge/Changelog-v1.0.1-orange.svg)](CHANGELOG-v1.0.1.md)
+[![Changelog](https://img.shields.io/badge/Changelog-v2.0.0-orange.svg)](CHANGELOG.md)
 
 A lightweight, ad-free, hardware-accelerated native launcher and optimization suite for **Samsung Tizen Smart TVs**. 
 
 > [!NOTE]
-> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/jss8649/quiet-tizen) created by **jss8649**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, dynamic console artwork, real-world retail QLED benchmarks, and automated 1-click deployment tools.
+> This repository is an **enhanced fork** of the foundational work [Quiet Tizen](https://github.com/jss8649/quiet-tizen) created by **jss8649**. It preserves the original author's research and agentic workflows while adding native D-pad icon reordering, tactile hardware audio, Apple TV-styled fluid focus animations, dynamic console artwork, real-world retail QLED benchmarks, and a reproducible local build pipeline.
 
 > [!IMPORTANT]
 > **Release Status:** Opt-quiet-tizen is currently in **Beta, but rock-solid and stable enough for daily use** as your TV's primary home screen. All core flows (HDMI port switching, streaming apps launch, D-pad navigation, volume/brightness controls, and sleep timers) are tested live on retail hardware and run 100% autonomously without external servers or cloud dependencies.
@@ -29,7 +29,7 @@ A lightweight, ad-free, hardware-accelerated native launcher and optimization su
 
 ## 🚀 Why this Fork? (Key Enhancements)
 
-While the original upstream repository documented a targeted case study on a single U8000 model, this fork transforms Quiet Tizen into **Opt-quiet-tizen v1.0.1**, a **practical, feature-complete daily driver**:
+While the original upstream repository documented a targeted case study on a single U8000 model, this fork transforms Quiet Tizen into **Opt-quiet-tizen v2.0.0**, a **practical, feature-complete daily driver**:
 
 1. **📱 Native Remote-Control Icon Reordering**:
    - Long-press **OK / Enter** for 500 ms on any app icon to enter interactive edit mode.
@@ -73,7 +73,7 @@ Smart TV SoCs have limited CPU horsepower. Architectural choices dictate whether
 
 Here is the real-world performance measured live on a physical **Samsung QN55Q7FAAPXPA**:
 
-| Metric | Stock Samsung Smart Hub | Web Launchers (Free My TV / TizenBrew) | Opt-quiet-tizen v1.0.1 (Beta) |
+| Metric | Stock Samsung Smart Hub | Web Launchers (Free My TV / TizenBrew) | Opt-quiet-tizen v2.0.0 |
 |---|---|---|---|
 | **Underlying Engine** | Heterogeneous (native shell + web widget embeds + ad network) | Chromium/WebKit Web Engine inside container | **Native .NET 6.0 with Tizen NUI / DALi GPU pipeline** |
 | **First UI Render Time** | 2,400 – 4,500 ms (ad network delay) | 1,200 – 2,200 ms (DOM parse & layout) | **92 – 104 ms** (measured live) |
@@ -295,7 +295,7 @@ Inherited from the original project and updated for modern platforms:
 
 ## 🔬 Tested Hardware Comparison
 
-| Item | Original Upstream Baseline | Opt-quiet-tizen v1.0.1 (Beta) |
+| Item | Original Upstream Baseline | Opt-quiet-tizen v2.0.0 |
 |---|---|---|
 | **Model** | `UN75U8000FFXZA` (2025 U8000F) | `QN55Q7FAAPXPA` (QLED 55") |
 | **Firmware** | `T-KSU2EFAKUC-0090-1300.9` | `T-RSLFUABC-0090-1300.9` |

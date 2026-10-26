@@ -1,40 +1,51 @@
 # Changelog
 
-All notable changes to the **Opt-quiet-tizen** project will be documented in this file.
+All notable changes to **Opt-quiet-tizen** are documented in this file.
 
 ---
 
-## [v1.0.1] - 2026-10-23
+## v2.0.0 — Architecture & Distribution Overhaul
 
-See [CHANGELOG-v1.0.1.md](CHANGELOG-v1.0.1.md) for full details.
+### Breaking Changes
+- **Distribution model changed.** Pre-signed `.tpk` downloads are no longer
+  provided. Samsung TV firmware requires packages to be signed with a
+  distributor certificate tied to the specific TV's DUID, so a single
+  pre-signed binary cannot work across devices. You now build and sign
+  locally with your own Samsung certificate profile. See the
+  "Build & Install on Your Own TV" section in [README.md](README.md).
 
 ### Added
-- **Dynamic HDMI 1 Hero Artwork**: Custom landscape illustrations for Xbox Series X/S, Nintendo Switch, Apple TV 4K, Gaming PC, Blu-ray/DVD, Cable TV/Box, and PS4/PS5 that dynamically update upon selecting presets.
-- **Preferencias del Launcher**: Dedicated modal accessed via the top-right Wrench icon (`🔧`) to configure HDMI preset names, language, sound, and animations.
-- **Clean Selection UI**: Removed outer brackets `[ ]` in modal values, presenting clean directional navigation arrows (`◀ ▶`).
-- **10 Languages Support**: Added full localized strings and date formats for Spanish, English, German, Portuguese, French, Mandarin Chinese, Japanese, Korean, Hindi, and Arabic.
-- **Native Font Directory Integration**: Automatically registers `/usr/share/fonts` to ensure glyph rendering for CJK, Arabic, and Devanagari.
-- **Dynamic Tab Header Sizing**: Sizing tabs dynamically according to translated string length and script width, eliminating text truncation ellipses.
-- **Animations Toggle**: User preference to disable UI transitions for instantaneous (0 ms) snap navigation.
-- **Sound Toggle & Native TV Feedback Audio**: Restored authentic TV hardware feedback sound (`/usr/share/feedback/sound/operation/move.wav` via `libmmfkeysound.so.0`) with on/off switch.
-- **Apps Pagination Dots**: Adaptive indicator showing page count and current page in the apps grid, dormant when single-page.
+- `SettingsStore.cs`: typed configuration via `System.Text.Json`, with
+  automatic migration from the legacy hand-parsed JSON format.
+- `Localization.cs`: key-based nested dictionary for i18n (10 languages),
+  replacing positionally-indexed string arrays.
+- `NativeCapabilities.cs`: centralizes all P/Invoke calls to Samsung/Tizen
+  native libraries, with runtime capability probing and graceful UI
+  degradation when a given library isn't available.
+- `DebugLog.cs`: in-memory ring buffer logging with an on-screen viewer
+  (Play/Pause key), replacing silent exception swallowing and per-event
+  disk writes.
+- `AtomicFileWriter.cs`: atomic, fsync-backed writes (temp file + rename)
+  for all persistent data, verified to survive a real power-loss event on
+  physical hardware.
+- `opt-quiet-tizen-lite` build variant: public-API-only build requiring no
+  elevated access, installable via standard Developer Mode.
 
 ### Fixed
-- Fixed HDMI 3 portrait image distortion by isolating dimension-specific caching (`asset + "@" + w + "x" + h`).
-- Fixed top-right toolbar labels overlapping the date/clock widget.
-- Fixed gray missing-image artifact behind TV Settings tiles by removing broken `shadow-settings.svg` references.
-- Fixed unlocalized text in TV Settings tiles and HDMI port descriptions.
-- Restored missing app icon artwork in `apps.json`.
-- Smoothed 2-frame zoom/flicker artifact when returning to Quiet Home from background applications.
+- Dynamic resolution-based layout (derived from `Window.Default.WindowSize`)
+  replacing hardcoded pixel positions, across the main UI, both modals, and
+  the app library grid.
+- Dark/light theme preference now persists through `SettingsStore` instead
+  of a `tmpfs`-backed file that was lost on reboot.
+- App reordering save path verified to survive both a soft reboot and a
+  real power-cut, using atomic writes with a single source of truth
+  (`/opt/usr/home/owner/data/`), removing two redundant/no-op write paths
+  that existed in earlier iterations.
 
----
-
-## [v1.0.0] - 2026-10-22
-
-### Added
-- Interactive D-pad 500 ms long-press icon reordering.
-- Apple TV-styled fluid focus zoom animations at 60 FPS.
-- Native TV audio feedback.
-- Custom high-definition assets for PS4, Nintendo Switch, HDMI 3, and streaming services.
-- 1-click automated deployment tools (`deploy-to-tv.bat`) and standalone TPK for retail TVs.
-- Retail QLED benchmarks on model `QN55Q7FAAPXPA`.
+### Known Limitations
+- Validated only on Samsung QN55Q7FAAPXPA, firmware
+  T-RSLFUABC-0090-1300.9 (Tizen 9.0). Not verified on other models, SoCs,
+  native resolutions besides 1080p, or other Tizen firmware versions.
+- Power-cut-mid-write for the reordering save path is covered by design
+  (orphaned `.tmp` cleanup) but not directly verified on hardware.
+- Behavior after a Samsung OTA firmware update has not been tested.

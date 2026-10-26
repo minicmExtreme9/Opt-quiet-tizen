@@ -14,7 +14,7 @@ def create_manifest(variant: str) -> str:
     pkg_id = "org.quiethome.lite" if variant == "lite" else "org.quiethome.launcher"
     label = "Quiet Home Lite" if variant == "lite" else "Quiet Home"
     return f"""<?xml version="1.0" encoding="utf-8"?>
-<manifest package="{pkg_id}" version="1.0.0" api-version="6.5" xmlns="http://tizen.org/ns/packages">
+<manifest package="{pkg_id}" version="2.0.0" api-version="6.5" xmlns="http://tizen.org/ns/packages">
     <profile name="tv" />
     <ui-application appid="{pkg_id}" exec="CinemaGraphApp.dll" multiple="false" nodisplay="false" taskmanage="true" type="dotnet" launch_mode="single">
         <label>{label}</label>
