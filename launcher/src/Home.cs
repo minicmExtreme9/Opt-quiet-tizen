@@ -450,7 +450,7 @@ public sealed class QuietHome : NUIApplication
 
  void BuildLibrary()
  {
-  if(library.Count==0){Text("Apps could not be loaded.",80,300,1500,70,32,ink);return;}
+  if(library.Count==0){Text("Apps could not be loaded.",SclX(80),SclY(300),SclX(1500),SclY(70),SclF(32),ink);return;}
   int totalPages = AppLibrary.PageCount(library.Count);
   libraryPage=Math.Clamp(libraryPage,0,totalPages-1);
   int start=libraryPage*AppLibrary.PageSize,count=AppLibrary.VisibleCount(library.Count,libraryPage);
@@ -463,7 +463,7 @@ public sealed class QuietHome : NUIApplication
    var card=Panel(x+w/2,y+h/2,w,h,HexColor(app.Background),SclX(24));
    card.PivotPoint=new Position(.5f,.5f,.5f);card.PositionUsesPivotPoint=true;
    AddAppArtwork(card,app,w,h);
-   var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24)),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+   var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24)),BorderlineWidth=SclX(4),BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
    card.Add(ring);
    slots.Add(new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=null,Name=app.Name,Action="app:"+app.Id,Description=app.Description,Row=i/5,X=x,Y=y,W=w,H=h});
   }
@@ -648,7 +648,7 @@ public sealed class QuietHome : NUIApplication
    if(official!=null){card.BackgroundColor=HexColor(official.Background);AddAppArtwork(card,official,dockW,dockH);}
    else card.Add(new ImageView{ResourceUrl=dockSvg,Size2D=new Size2D(dockW,dockH)});
   }
-  var ring=new View{Size2D=new Size2D(dockW,dockH),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(22),SclX(22),SclX(22),SclX(22)),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  var ring=new View{Size2D=new Size2D(dockW,dockH),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(22),SclX(22),SclX(22),SclX(22)),BorderlineWidth=SclX(4),BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
   slots.Add(new Slot{Card=card,Shadow=shadow,FocusRing=ring,Label=null,Name=label,Action=action,Description=label,Row=1,X=x,Y=SclY(854),W=dockW,H=dockH});
  }
@@ -668,7 +668,7 @@ public sealed class QuietHome : NUIApplication
   card.Add(Label(title,SclX(26),SclY(25),SclX(348),SclY(42),SclF(29),white,"Semibold"));
   var valLabel=Label(SettingDisplay(action),SclX(26),SclY(146),SclX(358),SclY(56),SclF(38),white,"Display");card.Add(valLabel);
   var descLabel=Label(description,SclX(26),SclY(226),SclX(370),SclY(34),SclF(20),new Color(.95f,.96f,1,1));card.Add(descLabel);
-  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24)),BorderlineWidth=4,BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
+  var ring=new View{Size2D=new Size2D(w,h),BackgroundColor=new Color(0,0,0,0),CornerRadius=new Vector4(SclX(24),SclX(24),SclX(24),SclX(24)),BorderlineWidth=SclX(4),BorderlineOffset=-1.0f,BorderlineColor=accent,Opacity=0};
   card.Add(ring);
   slots.Add(new Slot{Card=card,Shadow=null,FocusRing=ring,Label=valLabel,Desc=descLabel,Name=title,Action=action,Description=description,Row=row,X=x,Y=y,W=w,H=h});
  }

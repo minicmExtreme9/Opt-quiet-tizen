@@ -130,3 +130,8 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
     - `AppLibrary.Save()` utiliza `AtomicFileWriter.WriteAllTextSafe()` para `quiet-home-apps.json`.
     - `SettingsStore.Save()` utiliza `AtomicFileWriter.WriteAllTextSafe()` para `quiet-home-config.json`.
     - Incluido en `Home.csproj` y verificado en compilaciones Full y Lite (0 errores, 0 avisos).
+- **Verificación técnica de robustez**:
+  - *Comportamiento ante `.tmp` huérfano / corrupto*: `CleanOrphanTmp()` ejecuta únicamente `File.Exists(tmpPath)` y `File.Delete(tmpPath)` dentro de un bloque `try/catch` que registra advertencias en `DebugLog`. En ningún momento se abre, lee o deserializa el archivo `.tmp`. Si un corte de energía ocurre a mitad de la escritura y deja un `.tmp` de 0 bytes o con JSON incompleto/corrupto, el método lo elimina de forma silenciosa e inmediata, permitiendo que la carga continúe con el archivo final íntegro existente sin fallos.
+  - *Auditoría de escalado en AppLibrary y Home*:
+    - Grep de `Size2D(` y `Position2D(` en `AppLibrary.cs`: 0 ocurrencias (la clase contiene 74 líneas de lógica pura de modelo y navegación sin referencias a `Tizen.NUI`).
+    - La cuadrícula de apps correspondiente a la mención original reside en `Home.cs:BuildLibrary()` (~450-490), donde todos los cálculos (`Position2D`, `Size2D`, `CornerRadius`, `BorderlineWidth`, textos y paginadores) se encuentran gobernados por `SclX()`, `SclY()`, y `SclF()`.
