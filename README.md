@@ -222,7 +222,9 @@ The project provides two variants tailored to your access level and setup:
 
 | Feature | Lite Variant (`--variant lite`) | Full Variant (`--variant full`) |
 |---|---|---|
-| **Installation Requirements** | **None special**; installs directly as a standard TV app | Requires vendor/ temporary access process ([docs/02-access.md](docs/02-access.md)) |
+| **Installation Mechanism** | Standard Tizen package install; requires custom Samsung certificate profile ([Step 4](#step-4-create-your-samsung-certificate-profile-author--distributor)) | In-place binary swap inside factory system app; requires temporary root access ([docs/02-access.md](docs/02-access.md)) |
+| **Developer Certificate Needed?** | **Yes** (tied to your TV's specific DUID) | **No** (runs inside factory-signed Samsung system package) |
+| **System Modification Risk** | **Zero** (standard user-space app, fully isolated) | **Elevated** (modifies system files via root access, vulnerable to OTA patches) |
 | **App Launching (Dock & Library)** | ✅ Fully supported (public APIs) | ✅ Fully supported |
 | **HDMI Inputs (Direct source switching)** | ✅ Via public Tizen AppControl | ✅ Via public Tizen AppControl |
 | **Interactive Remote Icon Reordering** | ✅ Yes (golden ring, atomic storage) | ✅ Yes (golden ring, atomic storage) |
@@ -230,7 +232,17 @@ The project provides two variants tailored to your access level and setup:
 | **On-Screen Volume & Mute Controls** | ❌ Omitted (requires private Samsung API) | ✅ Supported (`libcapi-media-sound-manager-tv`) |
 | **On-Screen Brightness & Game Mode** | ❌ Omitted (requires private Samsung API) | ✅ Supported (`libsettings-api`) |
 
-*For users seeking a straightforward, hassle-free installation without modifying internal system permissions, the **Lite Variant** is recommended.*
+> [!IMPORTANT]
+> **Understanding the Real Trade-Off: Certificate Signing vs. Root Access**  
+> Neither variant is universally "better" or without cost; each pays a fundamentally different configuration price based on system architecture:
+> 
+> * **Lite Variant (Standard Package Installation):**  
+>   Installs as an independent, standalone Tizen package (`org.quiethome.lite`) via standard `sdb install`/`pkgcmd`. Because Tizen's package manager strictly enforces signature verification for any newly installed application, you **must** generate your own Samsung Certificate Profile bound to your television's DUID (detailed in [Step 4](#step-4-create-your-samsung-certificate-profile-author--distributor) to avoid `Check certificate error [-12]`). In exchange for this setup requirement, your TV system remains 100% untouched: zero root access, zero system file modification, and no risk of leaving device services in an unrecoverable state.
+> 
+> * **Full Variant (In-Place System Binary Replacement):**  
+>   Never passes through the Tizen package installer at all. As documented in [`recipes/install-launcher.sh`](recipes/install-launcher.sh), it directly replaces `BixbyPromotion.dll` inside a factory system application that Samsung already pre-installed and signed (`com.samsung.tv.bixby-promotion`), leveraging the temporary elevated access process in [docs/02-access.md](docs/02-access.md). Because no new package is introduced or verified by `pkgcmd`, it **does not require a personal developer certificate**. However, obtaining temporary root access carries tangible system risks: operations can potentially leave system files in an unrecoverable state if interrupted, and the mechanism relies on specific model/firmware exploits that future Samsung OTA firmware updates may patch or invalidate.
+> 
+> **Decision Guideline:** Choose **Lite** if you prefer a safe, non-destructive installation that leaves TV system files untouched, accepting the requirement to generate a Samsung developer certificate profile. Choose **Full** if you require on-screen volume, brightness, or game mode controls and prefer bypassing the certificate workflow, accepting the risks associated with temporary root access and modifying system app files.
 
 ### Step 6: Build with `tools/build.py`
 In your terminal at the root of the repository:
