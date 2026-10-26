@@ -61,9 +61,9 @@ While the original upstream repository documented a targeted case study on a sin
    - Seamless return from third-party apps with zero multi-frame resize glitch.
 9. **📊 Tested & Verified on Modern QLED Hardware**:
    - Verified on physical retail hardware: **Samsung QLED QN55Q7FAAPXPA** running firmware T-RSLFUABC-0090-1300.9 (Tizen 9.0 / RoseL platform).
-10. **📦 Pre-Built 1-Click TV Deployment Package**:
-   - Ready-to-run release bundle — no .NET compiler or SDK installation required on your host PC.
-   - Includes `deploy-to-tv.bat` for hands-off automated TV deployment, plus a standalone `.tpk` package for Tizen Studio.
+10. **📦 Compilación reproducible y firma vinculada a tu TV**:
+   - Código fuente abierto estructurado para que cualquier usuario compile localmente con .NET 6 y firme con su propio certificado Samsung vinculado al DUID de su televisor.
+   - Soporte para variante Full y variante Lite (sin privilegios privados). Consulta la [Guía de Compilación e Instalación](#-compilar-e-instalar-en-tu-propio-tv-build--install-guide).
 
 ---
 
@@ -160,63 +160,120 @@ Before deploying to your TV, ensure your PC and TV have the following requiremen
 
 ---
 
-### 📥 Installation & Deployment
+## 🔨 Compilar e instalar en tu propio TV (Build & Install Guide)
 
-#### Option 1: Direct 1-Click TV Install (Recommended)
+Debido a que el firmware de Samsung TV exige que todo paquete `.tpk` esté firmado con un certificado de distribuidor vinculado al **DUID (Device Unique ID)** de un televisor específico, **no es posible distribuir un binario pre-firmado genérico** para todos los usuarios. Cada usuario compila y firma con su propio perfil de certificado Samsung.
 
-Once the prerequisites are ready, deployment is fully automated with no manual assembly compilation:
+Sigue estos 8 pasos en orden para compilar e instalar en tu TV:
 
-1. **Enable Developer Mode on your Samsung TV**:
-   - Open the **Apps** panel on your TV.
-   - On your physical remote, press **`1` `2` `3` `4` `5`** in sequence.
-   - When the Developer Mode dialog appears, toggle the switch to **ON**.
-   - Enter your computer's local network IP (e.g., `192.168.1.X`) in the **Host PC IP** field.
-   - **Perform a cold reboot**: Press and hold the **Power** button on your remote for ~5 seconds until the TV turns off and reboots displaying the Samsung / QLED startup logo.
+### Paso 1: Requisitos previos en la PC
+- **.NET 6.0 SDK**: Instalado y disponible en tu terminal (`dotnet --version`). Si lo instalaste en una ruta personalizada, define la variable de entorno `DOTNET`.
+- **Python 3.10+**: Con la opción *"Add Python to PATH"* habilitada.
+- **Tizen Studio con TV SDK & Tools**:
+  1. Descarga e instala **Tizen Studio with IDE** desde el [sitio oficial de desarrolladores de Tizen](https://developer.tizen.org/development/tizen-studio/download).
+  2. Abre el **Tizen Package Manager** (`Tools > Package Manager`).
+  3. En la pestaña **Main SDK**, instala `Tizen SDK tools`.
+  4. En la pestaña **Extension SDK**, instala `TV Extensions-6.5` (o la versión que corresponda a tu TV) y **Samsung Certificate Extension** (obligatorio para el Paso 3).
+  5. Asegúrate de que `tizen-studio/tools` y `tizen-studio/tools/ide/bin` estén en tu `PATH` del sistema para disponer de los comandos `sdb` y `tizen`.
 
-2. **Deploy with 1 Click**:
-   - Download the latest **[Opt-quiet-tizen v1.0.1 (Beta) Package (`Opt-quiet-tizen-v1.0.zip`)](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases/latest)** from the [Releases page](https://github.com/minicmExtreme9/Opt-quiet-tizen/releases).
-   - Extract the `.zip` archive on your computer.
-   - Double-click and run `tv-direct-install/deploy-to-tv.bat`.
-   - Enter your TV's local IP address when prompted (e.g., `192.168.1.32`).
-   - The script automatically verifies access, deploys the optimized assembly, syncs artwork, and launches Quiet Home directly on your screen.
+### Paso 2: Conectar el televisor (Developer Mode & Device Manager)
+1. **Activar Developer Mode en el TV**:
+   - Abre la pantalla de **Apps** en tu televisor.
+   - En tu mando a distancia físico (o app remota con teclado numérico), presiona los números **`1` `2` `3` `4` `5`** en secuencia.
+   - En la ventana modal de *Developer Mode*, cambia el interruptor a **ON**.
+   - En el campo **Host PC IP**, introduce la dirección IP local de tu PC (ej. `192.168.1.50`).
+   - Mantén presionado el botón **Power** del mando físico durante 5 segundos hasta que el TV se apague y vuelva a encender mostrando el logotipo de Samsung/QLED (reinicio en frío indispensable).
+2. **Registrar y conectar en Device Manager**:
+   - Abre **Tizen Device Manager** desde Tizen Studio (`Tools > Device Manager`).
+   - Haz clic en el icono de **Remote Device Manager** (arriba a la derecha).
+   - Haz clic en **Scan** o pulsa **+** para agregar manualmente la IP local de tu TV (puerto `26101` por defecto).
+   - Conecta el dispositivo. Al conectarse, aparecerá tu televisor en la lista principal.
+   - Selecciona el televisor y anota su **DUID** visible en el panel de propiedades (*Properties*) de la derecha.
 
-#### Option 2: Standalone TPK Package (Tizen Studio / SDB CLI)
+### Paso 3: Habilitar la extensión de certificados Samsung
+1. Abre **Tizen Package Manager** (`Tools > Package Manager`).
+2. Selecciona la pestaña **Extension SDK**.
+3. Localiza **Samsung Certificate Extension** y haz clic en **Install**.
+4. Reinicia Tizen Studio para asegurar que la extensión quede registrada.
 
-For developers using Tizen Device Manager, emulators, or SDB CLI, the release archive includes a self-contained `.tpk` installer inside the `tizen-tpk-installer/` folder:
+### Paso 4: Crear tu perfil de certificado Samsung (Author + Distributor)
+> [!CAUTION]
+> **Advertencia crítica sobre el Error -12 (`Check certificate error [-12]`):**  
+> Tu perfil DEBE contener certificados emitidos por **Samsung**, NUNCA mezcles un certificado genérico de desarrollador Tizen con uno de Samsung. Ambos (Author y Distributor) deben ser de tipo Samsung, y el distribuidor debe incluir explícitamente el DUID de tu televisor.
+
+1. En Tizen Studio, abre `Tools > Certificate Manager`.
+2. Pulsa en el botón **+** (New Certificate Profile).
+3. Selecciona **Samsung** (¡NO Tizen!) y pulsa *Next*.
+4. Selecciona **TV** y pulsa *Next*.
+5. Asigna un nombre al perfil (ej. `SamsungTVProfile`).
+6. **Author Certificate**:
+   - Selecciona *Create a new author certificate*.
+   - Inicia sesión con tu cuenta gratuita de **Samsung Developers**.
+   - Completa el asistente para generar tu clave y certificado de autor Samsung.
+7. **Distributor Certificate**:
+   - Selecciona *Create a new distributor certificate*.
+   - Selecciona el tipo de privilegio (*Public* o *Partner*).
+   - En el campo de dispositivos (**DUID**), asegúrate de que esté seleccionado o ingresa manualmente el DUID de tu TV obtenido en el Paso 2.
+   - Completa el asistente.
+8. Verifica que el perfil recién creado aparezca con un check azul como el perfil activo por defecto.
+
+### Paso 5: Elegir la variante a compilar (Full vs Lite)
+El proyecto ofrece dos variantes según tu nivel de acceso y necesidades:
+
+| Característica | Variante Lite (`--variant lite`) | Variante Full (`--variant full`) |
+|---|---|---|
+| **Requisitos de instalación** | **Ninguno especial**; instala directamente como app regular de TV | Requiere proceso de acceso vendor/ ([docs/02-access.md](docs/02-access.md)) |
+| **Lanzamiento de Apps (Dock & Biblioteca)** | ✅ Totalmente soportado (APIs públicas) | ✅ Totalmente soportado |
+| **Entradas HDMI (Cambio directo de fuente)** | ✅ Vía AppControl público de Tizen | ✅ Vía AppControl público de Tizen |
+| **Reordenamiento interactivo con mando** | ✅ Sí (anillo dorado, guardado atómico) | ✅ Sí (anillo dorado, guardado atómico) |
+| **Rendimiento GPU DALi / Temas Claro-Oscuro**| ✅ 60 FPS fluidos | ✅ 60 FPS fluidos |
+| **Control de volumen / mute en pantalla** | ❌ Omitido (requiere API privada Samsung) | ✅ Soportado (`libcapi-media-sound-manager-tv`) |
+| **Ajuste de brillo / modo juego en pantalla**| ❌ Omitido (requiere API privada Samsung) | ✅ Soportado (`libsettings-api`) |
+
+*Para usuarios que desean una instalación directa y sin tocar permisos internos del sistema, se recomienda la **Variante Lite**.*
+
+### Paso 6: Compilar con `tools/build.py`
+En tu terminal en la raíz del repositorio:
+
+- **Para compilar la Variante Lite (Recomendada para empezar)**:
+  ```sh
+  python tools/build.py launcher --variant lite
+  ```
+  *Genera: `opt-quiet-tizen-lite-unsigned.tpk`*
+
+- **Para compilar la Variante Full**:
+  ```sh
+  python tools/build.py launcher --variant full
+  ```
+  *Genera: `opt-quiet-tizen-full-unsigned.tpk`*
+
+*(Nota: Si tus ensamblados de Tizen no están en `.local/tv-framework`, puedes indicar su ubicación con `--framework <ruta>` o mediante la variable de entorno `TIZEN_FRAMEWORK`).*
+
+### Paso 7: Firmar el paquete con tu perfil Samsung
+Utiliza la herramienta CLI de Tizen Studio indicando el nombre de tu perfil creado en el Paso 4:
 
 ```sh
-# Connect to your TV or emulator
-sdb connect <TV-IP>
+# Para Variante Lite:
+tizen package -t tpk -s <NOMBRE_DE_TU_PERFIL_SAMSUNG> -- opt-quiet-tizen-lite-unsigned.tpk
 
-# Install the standalone TPK
-sdb install tizen-tpk-installer/Opt-quiet-tizen-v1.0.tpk
+# Para Variante Full:
+tizen package -t tpk -s <NOMBRE_DE_TU_PERFIL_SAMSUNG> -- opt-quiet-tizen-full-unsigned.tpk
 ```
 
-#### Option 3: Build from Source
+Alternativamente, puedes usar el menú gráfico de Tizen Studio en `Tools > Package > Sign .tpk`. El comando generará el paquete firmado listo para instalar.
 
-Requirements:
-- Python 3.12+
-- .NET 6.0 SDK (`dotnet`)
-- Samsung Tizen Studio SDB tools
+### Paso 8: Instalar en tu televisor con SDB
+Asegúrate de estar conectado a tu televisor y envía el paquete firmado:
 
 ```sh
-# Clone this enhanced fork:
-git clone https://github.com/minicmExtreme9/Opt-quiet-tizen.git
-cd Opt-quiet-tizen
+# Conectar al televisor si no está conectado:
+sdb connect <IP_DE_TU_TV>
 
-# Original upstream repository:
-# https://github.com/jss8649/quiet-tizen
-
-# Run tests:
-python3 -m unittest discover -s tests -v
-
-# Obtain matching Tizen assemblies from your TV:
-# tv pull /usr/share/dotnet.tizen/netcoreapp/Tizen.NUI.dll .local/tv-framework/Tizen.NUI.dll
-# (repeat for Tizen.Applications.Common, Tizen.System, Tizen)
-
-# Build the native launcher:
-python tools/build.py launcher --framework .local/tv-framework
+# Instalar el paquete firmado en el TV:
+sdb install opt-quiet-tizen-lite.tpk
 ```
+
+¡Listo! El launcher aparecerá instalado en tu televisor y podrás iniciarlo directamente desde la pantalla de aplicaciones.
 
 ---
 

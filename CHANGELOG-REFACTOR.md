@@ -135,3 +135,28 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - *Auditoría de escalado en AppLibrary y Home*:
     - Grep de `Size2D(` y `Position2D(` en `AppLibrary.cs`: 0 ocurrencias (la clase contiene 74 líneas de lógica pura de modelo y navegación sin referencias a `Tizen.NUI`).
     - La cuadrícula de apps correspondiente a la mención original reside en `Home.cs:BuildLibrary()` (~450-490), donde todos los cálculos (`Position2D`, `Size2D`, `CornerRadius`, `BorderlineWidth`, textos y paginadores) se encuentran gobernados por `SclX()`, `SclY()`, y `SclF()`.
+
+---
+
+## CORRECCIÓN 4 — Estrategia de distribución: Compilación reproducible sin binarios pre-firmados
+- **Cambio de paradigma en la distribución**:
+  - Se retiró la promesa de distribuir un `.tpk` binario pre-firmado listo para instalar.
+  - **Motivo técnico**: En Samsung Smart TV (firmware comercial), la instalación mediante `sdb install` o `pkgcmd -i -t tpk` exige obligatoriamente un certificado distribuidor de Samsung emitido contra el **DUID (Device Unique ID)** del televisor objetivo. Un `.tpk` firmado con el DUID de un desarrollador fallará de forma irrecuperable en el televisor de otro usuario arrojando el error `Check certificate error [-12]`. Esta es una restricción no negociable de la plataforma Tizen en TVs Samsung.
+  - **Nueva estrategia**: El artefacto distribuible oficial es el **código fuente completo + el script de build automatizado**. Cada usuario compila localmente con .NET 6 y firma el paquete resultante con su propio perfil de certificado Samsung vinculado al DUID de su TV.
+- **Auditoría y parametrización de `tools/build.py`**:
+  - Verificado que `tools/build.py` **no contiene** certificados hardcodeados (`.p12`), DUIDs, IPs ni rutas locales del autor.
+  - Se confirmó que el script compila y empaqueta `.tpk`s **sin firmar** (`opt-quiet-tizen-lite-unsigned.tpk` y `opt-quiet-tizen-full-unsigned.tpk`), dejando la firma como un paso manual explícito para el usuario.
+  - Se parametrizaron las variables de entorno (`DOTNET`, `TIZEN_FRAMEWORK`, `TV_FRAMEWORK_DIR`) y argumentos CLI (`--variant full|lite`, `--container`, `--output-tpk`, `--no-tpk`) con valores por defecto portables.
+- **Limpieza de artefactos pre-firmados**:
+  - Se confirmó que ningún archivo `.tpk` se encuentra bajo control de versiones en git.
+  - La regla `*.tpk` permanece activa en `.gitignore`.
+- **Actualización de documentación (`README.md`)**:
+  - Se reemplazaron las secciones obsoletas de "1-Click TV Install" y binarios pre-firmados por una guía exhaustiva de 8 pasos:
+    1. Requisitos previos (.NET 6 SDK, Python 3.10+, Tizen Studio con TV SDK).
+    2. Conexión del televisor (Developer Mode en el TV y registro en Device Manager).
+    3. Habilitación de la extensión Samsung Certificate Extension en Package Manager.
+    4. Creación del perfil de certificado Samsung (Author y Distributor ambos de Samsung, vinculando el DUID del TV).
+    5. Selección de variante: Lite (APIs públicas sin privilegios) vs Full (ajustes nativos de volumen/brillo).
+    6. Compilación mediante `tools/build.py`.
+    7. Firma del paquete con `tizen package -t tpk -s <perfil>`.
+    8. Instalación en el televisor mediante `sdb install`.

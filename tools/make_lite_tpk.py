@@ -1,15 +1,15 @@
 #!/usr/bin/env python3
-"""Packages the unprivileged lite variant into opt-quiet-tizen-lite.tpk without touching the full tpk."""
+"""Packages the unprivileged lite variant into opt-quiet-tizen-lite-unsigned.tpk."""
 import os
 import shutil
 import zipfile
 from pathlib import Path
 
-ROOT = Path("C:/Users/Jorge/quiet-tizen")
+ROOT = Path(__file__).resolve().parents[1]
 source_dir = ROOT / ".local/package-lite"
 
 if not source_dir.exists():
-    raise SystemExit("Error: .local/package-lite does not exist. Run 'python tools/build.py launcher --variant lite --framework .local/tv-framework' first.")
+    raise SystemExit("Error: .local/package-lite does not exist. Run 'python tools/build.py launcher --variant lite' first.")
 
 pkg_root = ROOT / ".local/tpk_quiethome_lite"
 if pkg_root.exists():
@@ -22,9 +22,12 @@ pkg_root.mkdir(parents=True)
 
 # Copy bin files
 shutil.copy(source_dir / "CinemaGraphApp.dll", pkg_root / "bin/CinemaGraphApp.dll")
-shutil.copy(source_dir / "CinemaGraphApp.runtimeconfig.json", pkg_root / "bin/CinemaGraphApp.runtimeconfig.json")
-shutil.copy(source_dir / "Probe.dll", pkg_root / "bin/Probe.dll")
-shutil.copy(source_dir / "QuickLaunch.dll", pkg_root / "bin/QuickLaunch.dll")
+if (source_dir / "CinemaGraphApp.runtimeconfig.json").is_file():
+    shutil.copy(source_dir / "CinemaGraphApp.runtimeconfig.json", pkg_root / "bin/CinemaGraphApp.runtimeconfig.json")
+if (source_dir / "Probe.dll").is_file():
+    shutil.copy(source_dir / "Probe.dll", pkg_root / "bin/Probe.dll")
+if (source_dir / "QuickLaunch.dll").is_file():
+    shutil.copy(source_dir / "QuickLaunch.dll", pkg_root / "bin/QuickLaunch.dll")
 
 # Copy res
 shutil.copytree(source_dir / "quiet-home", pkg_root / "res/quiet-home")
@@ -46,16 +49,20 @@ manifest = """<?xml version="1.0" encoding="utf-8"?>
 """
 (pkg_root / "tizen-manifest.xml").write_text(manifest, encoding="utf-8")
 
-# Create icon
-try:
-    from PIL import Image
-    icon = Image.new("RGBA", (117, 117), (20, 35, 60, 255))
-    icon.save(pkg_root / "shared/res/CinemaGraphApp.png")
-except ImportError:
-    pass
+# Copy or create icon
+icon_src = ROOT / "launcher/assets/icon.png"
+if icon_src.is_file():
+    shutil.copyfile(icon_src, pkg_root / "shared/res/CinemaGraphApp.png")
+else:
+    try:
+        from PIL import Image
+        icon = Image.new("RGBA", (117, 117), (20, 35, 60, 255))
+        icon.save(pkg_root / "shared/res/CinemaGraphApp.png")
+    except ImportError:
+        pass
 
-# Pack TPK
-out_tpk = Path("C:/Users/Jorge/Downloads/opt-quiet-tizen-lite.tpk")
+# Pack unsigned TPK
+out_tpk = ROOT / "opt-quiet-tizen-lite-unsigned.tpk"
 with zipfile.ZipFile(out_tpk, "w", zipfile.ZIP_DEFLATED) as z:
     for root, dirs, files in os.walk(pkg_root):
         for f in files:
@@ -63,4 +70,4 @@ with zipfile.ZipFile(out_tpk, "w", zipfile.ZIP_DEFLATED) as z:
             arcname = p.relative_to(pkg_root)
             z.write(p, arcname)
 
-print("Generated clean lite package:", out_tpk, "size:", out_tpk.stat().st_size)
+print("Generated unsigned lite package:", out_tpk, "size:", out_tpk.stat().st_size)
