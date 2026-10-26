@@ -75,4 +75,5 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
   - Desplegado y lanzado en el televisor (PID: 16257).
 - **Resultado en TV del dueño (Punto de control 5)**:
-  - *Pendiente de confirmación visual en la resolución real del hardware del dueño.*
+  - Verificado y confirmado en Samsung Smart TV real (QLED). El layout dinámico escala y se visualiza correctamente en la pantalla sin desalineaciones ni recortes.
+  - Se restauró la visibilidad de la tarjeta de "Modo Juego" en la fila de Ajustes Rápidos (`HasGameMode => HasSettingsApi`) a petición del dueño, reempaquetado y desplegado (PID: 17669).
