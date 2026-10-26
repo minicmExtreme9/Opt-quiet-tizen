@@ -71,14 +71,13 @@ public sealed class QuietHome : NUIApplication
   ("PlayStation 5", "preset_game_console", "feature-ps5.svg"),
   ("Nintendo Switch", "preset_game_console", "feature-switch-hero.svg"),
   ("Xbox Series X / S", "preset_game_console", "feature-xbox.svg"),
-  ("Apple TV 4K", "preset_streaming", "feature-appletv.svg"),
   ("Gaming PC", "preset_pc", "feature-pc.svg"),
   ("Chromecast / Fire TV", "preset_streaming", "feature-tvbox.svg"),
   ("Blu-ray / DVD", "preset_player", "feature-bluray.svg"),
   ("Cable TV / Box", "preset_tv_box", "feature-tvbox.svg"),
   ("HDMI Device", "preset_device", "feature-hdmi-hero.svg")
  };
- int[] hdmiPresetIndex = new[] { 0, 2, 9 };
+ int[] hdmiPresetIndex = new[] { 0, 2, 8 };
 
  string GetHeroAsset(int index)
  {
@@ -264,11 +263,11 @@ public sealed class QuietHome : NUIApplication
     string anim = ExtractJsonValue(json, "animations");
     if (!string.IsNullOrEmpty(anim)) animationsEnabled = anim == "true" || anim == "1";
     string p0 = ExtractJsonValue(json, "preset0");
-    if (int.TryParse(p0, out var v0) && v0 >= 0 && v0 < HdmiPresets.Length) hdmiPresetIndex[0] = v0;
+    if (int.TryParse(p0, out var v0)) { if (v0 >= HdmiPresets.Length) v0 = HdmiPresets.Length - 1; if (v0 >= 0) hdmiPresetIndex[0] = v0; }
     string p1 = ExtractJsonValue(json, "preset1");
-    if (int.TryParse(p1, out var v1) && v1 >= 0 && v1 < HdmiPresets.Length) hdmiPresetIndex[1] = v1;
+    if (int.TryParse(p1, out var v1)) { if (v1 >= HdmiPresets.Length) v1 = HdmiPresets.Length - 1; if (v1 >= 0) hdmiPresetIndex[1] = v1; }
     string p2 = ExtractJsonValue(json, "preset2");
-    if (int.TryParse(p2, out var v2) && v2 >= 0 && v2 < HdmiPresets.Length) hdmiPresetIndex[2] = v2;
+    if (int.TryParse(p2, out var v2)) { if (v2 >= HdmiPresets.Length) v2 = HdmiPresets.Length - 1; if (v2 >= 0) hdmiPresetIndex[2] = v2; }
     for(int h=0; h<3; h++) hdmiDescs[h] = GetHdmiDesc(h);
     string h1n = ExtractJsonValue(json, "hdmi1_name"); if (!string.IsNullOrEmpty(h1n)) hdmiNames[0] = h1n;
     string h1d = ExtractJsonValue(json, "hdmi1_desc"); if (!string.IsNullOrEmpty(h1d)) hdmiDescs[0] = h1d;
