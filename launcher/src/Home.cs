@@ -59,8 +59,9 @@ public sealed class QuietHome : NUIApplication
  bool soundEnabled=true;
  bool animationsEnabled=true;
 
- static readonly string[] LanguageCodes = new[] { "es", "en", "de", "pt", "fr", "zh", "ja", "ko", "hi", "ar" };
- static readonly string[] LanguageNames = new[] { "Español", "English", "Deutsch", "Português", "Français", "中文 (Mandarin)", "日本語", "한국어", "हिन्दी", "العربية" };
+ static readonly string[] LanguageCodes = Localization.LanguageCodes;
+ static readonly string[] LanguageNames = Localization.LanguageNames;
+ string CurrentLangCode => (currentLang >= 0 && currentLang < LanguageCodes.Length) ? LanguageCodes[currentLang] : "es";
  int currentLang = 0;
 
  string[] hdmiNames = new[] { "PlayStation 4 / PC", "Nintendo Switch", "HDMI 3" };
@@ -98,33 +99,9 @@ public sealed class QuietHome : NUIApplication
   return $"HDMI {index + 1}";
  }
 
- CultureInfo GetCurrentCulture()
- {
-  try {
-   string code = (currentLang >= 0 && currentLang < LanguageCodes.Length) ? LanguageCodes[currentLang] : "es";
-   switch(code) {
-    case "es": return new CultureInfo("es-ES");
-    case "en": return new CultureInfo("en-US");
-    case "de": return new CultureInfo("de-DE");
-    case "pt": return new CultureInfo("pt-PT");
-    case "fr": return new CultureInfo("fr-FR");
-    case "zh": return new CultureInfo("zh-CN");
-    case "ja": return new CultureInfo("ja-JP");
-    case "ko": return new CultureInfo("ko-KR");
-    case "hi": return new CultureInfo("hi-IN");
-    case "ar": return new CultureInfo("ar-SA");
-    default: return CultureInfo.CurrentCulture;
-   }
-  } catch {
-   return CultureInfo.CurrentCulture;
-  }
- }
+ CultureInfo GetCurrentCulture() => Localization.GetCulture(CurrentLangCode);
+ string GetFormattedDate() => Localization.FormatDate(DateTime.Now, CurrentLangCode);
 
- string GetFormattedDate()
- {
-  var ci = GetCurrentCulture();
-  return DateTime.Now.ToString("ddd, MMM d · h:mm tt", ci);
- }
 
  // Launcher Settings Modal state
  View modalOverlay;
@@ -133,65 +110,8 @@ public sealed class QuietHome : NUIApplication
  TextLabel[] modalRowValues;
  View[] modalRowViews;
 
- static readonly Dictionary<string, string[]> I18N = new Dictionary<string, string[]>
- {
-  ["home"] = new[] { "Inicio", "Home", "Start", "Início", "Accueil", "主页", "ホーム", "홈", "होम", "الرئيسية" },
-  ["inputs"] = new[] { "Entradas", "Inputs", "Eingänge", "Entradas", "Entrées", "输入", "入力", "입력", "इनपुट", "المداخل" },
-  ["apps"] = new[] { "Apps", "Apps", "Apps", "Apps", "Apps", "应用", "アプリ", "앱", "ऐप्स", "التطبيقات" },
-  ["settings"] = new[] { "Ajustes TV", "TV Settings", "TV-Einstellungen", "Configurações TV", "Paramètres TV", "电视设置", "テレビ設定", "TV 설정", "टीवी सेटिंग्स", "إعدادات التلفاز" },
-  ["quick_settings"] = new[] { "Ajustes Rápidos", "Quick Settings", "Schnelleinstellungen", "Configurações Rápidas", "Paramètres Rapides", "快捷设置", "クイック設定", "빠른 설정", "त्वरित सेटिंग्स", "الإعدادات السريعة" },
-  ["your_apps"] = new[] { "Tus Aplicaciones", "Your Apps", "Ihre Apps", "Seus Aplicativos", "Vos Applications", "你的应用", "マイアプリ", "내 앱", "आपके ऐप्स", "تطبيقاتك" },
-  ["launcher_settings"] = new[] { "Preferencias del launcher", "Launcher Preferences", "Launcher-Einstellungen", "Preferências do launcher", "Préférences du lanceur", "启动器偏好设置", "ランチャー設定", "런처 환경설정", "लॉन्चर प्राथमिकताएं", "تفضيلات المشغل" },
-  ["launcher_settings_desc"] = new[] { "Ajustes · Nombres HDMI, idioma y sonido", "Settings · HDMI names, language & sound", "Einstellungen · HDMI-Namen, Sprache & Ton", "Ajustes · Nomes HDMI, idioma e som", "Paramètres · Noms HDMI, langue et son", "设置 · HDMI名称、语言与声音", "設定 · HDMI名、言語、サウンド", "설정 · HDMI 이름, 언어 및 사운드", "सेटिंग्स · HDMI नाम, भाषा और ध्वनि", "الإعدادات · أسماء HDMI واللغة والصوت" },
-  ["back_to_input"] = new[] { "Volver a entrada", "Back to input", "Zurück zum Eingang", "Voltar para entrada", "Retour à la source", "返回输入", "入力に戻る", "입력으로 돌아가기", "इनपुट पर वापस जाएं", "العودة إلى المدخل" },
-  ["back_to_home"] = new[] { "Volver al Inicio", "Back to Home", "Zurück zum Start", "Voltar ao Início", "Retour à l'accueil", "返回主页", "ホームに戻る", "홈으로 돌아가기", "होम पर वापस जाएं", "العودة إلى الرئيسية" },
-  ["reorder_hint"] = new[] { "Flechas: mover · OK: fijar · Back: salir", "Arrows: move · OK: set · Back: exit", "Pfeile: bewegen · OK: fixieren · Zurück: beenden", "Setas: mover · OK: fixar · Voltar: sair", "Flèches: déplacer · OK: fixer · Retour: quitter", "方向键: 移动 · OK: 确定 · Back: 退出", "矢印: 移動 · OK: 決定 · Back: 終了", "화살표: 이동 · OK: 고정 · Back: 나가기", "तीर: ले जाएं · ठीक: सेट · वापस: बाहर", "الأسهم: تحريك · موافق: تثبيت · رجوع: خروج" },
-  ["sound"] = new[] { "Sonido", "Sound", "Ton", "Som", "Son", "声音", "サウンド", "소리", "ध्वनि", "الصوت" },
-  ["sound_on"] = new[] { "Activado", "Enabled", "Aktiviert", "Ativado", "Activé", "已开启", "オン", "켜짐", "चालू", "مفعل" },
-  ["sound_off"] = new[] { "Desactivado", "Disabled", "Deaktiviert", "Desativado", "Désactivé", "已关闭", "オフ", "꺼짐", "बंद", "معطل" },
-  ["animations"] = new[] { "Animaciones", "Animations", "Animationen", "Animações", "Animations", "动效", "アニメーション", "애니메이션", "एनिमेशन", "الرسوم المتحركة" },
-  ["language"] = new[] { "Idioma", "Language", "Sprache", "Idioma", "Langue", "语言", "言語", "언어", "भाषा", "اللغة" },
-  ["save_close"] = new[] { "Guardar y Cerrar (OK)", "Save & Close (OK)", "Speichern & Schließen (OK)", "Salvar e Fechar (OK)", "Enregistrer et Fermer (OK)", "保存并关闭 (OK)", "保存して閉じる (OK)", "저장 및 닫기 (OK)", "सहेजें और बंद करें (OK)", "حفظ وإغلاق (OK)" },
-  ["switch_to"] = new[] { "Cambiar a", "Switch to", "Wechseln zu", "Mudar para", "Basculer vers", "切换至", "切り替え:", "전환:", "बदलें:", "التبديل إلى" },
-  ["lets_play"] = new[] { "A jugar.", "Let's play.", "Lass uns spielen.", "Vamos jogar.", "C'est parti.", "开始游玩。", "プレイしよう。", "플레이하기.", "खेल शुरू करें।", "لنلعب." },
-  ["volume"] = new[] { "Volumen", "Volume", "Lautstärke", "Volume", "Volume", "音量", "音量", "음량", "आवाज़", "مستوى الصوت" },
-  ["brightness"] = new[] { "Brillo", "Brightness", "Helligkeit", "Brilho", "Luminosité", "亮度", "明るさ", "밝기", "चमक", "السطوع" },
-  ["game_mode"] = new[] { "Modo Juego", "Game Mode", "Spielmodus", "Modo Jogo", "Mode Jeu", "游戏模式", "ゲームモード", "게임 모드", "गेम मोड", "وضع الألعاب" },
-  ["sleep_timer"] = new[] { "Temporizador", "Sleep Timer", "Schlummerfunktion", "Temporizador", "Minuteur", "睡眠定时器", "スリープタイマー", "취침 예약", "स्लीप टाइमर", "مؤقت النوم" },
-  ["controllers"] = new[] { "Mandos", "Controllers", "Controller", "Controles", "Manettes", "手柄控制器", "コントローラー", "컨트롤러", "कंट्रोलर्स", "أجهزة التحكم" },
-  ["network"] = new[] { "Red", "Network", "Netzwerk", "Rede", "Réseau", "网络", "ネットワーク", "네트워크", "नेटवर्क", "الشبكة" },
-  ["advanced"] = new[] { "Ajustes Samsung", "Advanced", "Erweitert", "Avançado", "Avancé", "三星设置", "詳細設定", "고급 설정", "उन्नत सेटिंग्स", "إعدادات متقدمة" },
-  ["modal_hint"] = new[] { "Flechas para cambiar | Botón de atrás o \"OK\" para guardar", "Arrows to change | Back button or \"OK\" to save", "Pfeile zum Ändern | Zurück-Taste oder „OK“ zum Speichern", "Setas para mudar | Botão Voltar ou \"OK\" para salvar", "Flèches pour changer | Bouton Retour ou « OK » pour enregistrer", "方向键更改 | 返回键或 \"OK\" 保存", "矢印キーで変更 | 戻るまたは「OK」で保存", "화살표로 변경 | 뒤로가기 또는 \"OK\"로 저장", "बदलने के लिए तीर | सहेजने के लिए वापस या \"OK\"", "الأسهم للتغيير | زر الرجوع أو \"OK\" للحفظ" },
-  ["volume_desc"] = new[] { "Seleccionar · Flechas para ajustar", "Select · Left / Right to adjust", "Auswählen · Links / Rechts anpassen", "Selecionar · Esquerda / Direita ajustar", "Sélectionner · Gauche / Droite ajuster", "选择 · 左右键调节", "選択 · 左右で調整", "선택 · 좌우로 조절", "चुनें · समायोजित करने के लिए बाएं/दाएं", "اختر · يمين / يسار للضبط" },
-  ["brightness_desc"] = new[] { "Seleccionar · Flechas para ajustar", "Select · Left / Right to adjust", "Auswählen · Links / Rechts anpassen", "Selecionar · Esquerda / Direita ajustar", "Sélectionner · Gauche / Droite ajuster", "选择 · 左右键调节", "選択 · 左右で調整", "선택 · 좌우로 조절", "चुनें · समायोजित करने के लिए बाएं/दाएं", "اختر · يمين / يسار للضبط" },
-  ["game_mode_desc"] = new[] { "Seleccionar para activar o desactivar", "Select to switch on or off", "Auswählen zum Ein- oder Ausschalten", "Selecionar para ligar ou desligar", "Sélectionner pour activer ou désactiver", "选择以开启或关闭", "選択してオン/オフ切り替え", "선택하여 켜기 또는 끄기", "चालू या बंद करने के लिए चुनें", "اختر للتشغيل أو الإيقاف" },
-  ["sleep_timer_desc"] = new[] { "Seleccionar para cambiar temporizador", "Select to change the timer", "Auswählen zum Ändern des Timers", "Selecionar para alterar o temporizador", "Sélectionner pour modifier le minuteur", "选择以更改定时器", "選択してタイマーを変更", "선택하여 타이머 변경", "टाइमर बदलने के लिए चुनें", "اختر لتغيير المؤقت" },
-  ["mute_desc"] = new[] { "Seleccionar para silenciar o activar", "Select to mute or unmute", "Auswählen zum Stummschalten", "Selecionar para ativar ou desativar som", "Sélectionner pour couper ou activer le son", "选择以静音或开启声音", "選択して消音または解除", "선택하여 음소거 또는 해제", "म्यूट या अनम्यूट करने के लिए चुनें", "اختر للكتم أو إلغاء الكتم" },
-  ["controllers_desc"] = new[] { "DualSense · mantén pulsado PS + Create", "DualSense · hold PS + Create", "DualSense · PS + Create gedrückt halten", "DualSense · segure PS + Create", "DualSense · maintenir PS + Create", "DualSense · 按住 PS + Create 键", "DualSense · PS + Create を長押し", "DualSense · PS + 만들기 버튼 길게 누름", "DualSense · PS + Create दबाकर रखें", "DualSense · اضغط مطولاً على PS + Create" },
-  ["network_desc"] = new[] { "Configuración de red y Wi-Fi", "Wi-Fi and connection setup", "WLAN- und Netzwerkeinrichtung", "Configuração de Wi-Fi e rede", "Configuration Wi-Fi et réseau", "Wi-Fi 与网络设置", "Wi-Fi およびネットワーク設定", "Wi-Fi 및 네트워크 설정", "Wi-Fi और नेटवर्क सेटअप", "إعدادات Wi-Fi والشبكة" },
-  ["advanced_desc"] = new[] { "Abrir ajustes completos de Samsung", "Open Samsung's full settings", "Vollständige Samsung-Einstellungen", "Abrir configurações completas da Samsung", "Ouvrir tous les paramètres Samsung", "打开三星完整系统设置", "Samsungの全設定を開く", "Samsung 전체 설정 열기", "सैमसंग की पूरी सेटिंग्स खोलें", "فتح إعدادات سامسونج الكاملة" },
-  ["pair_controller"] = new[] { "Vincular mando", "Pair controller", "Controller koppeln", "Emparelhar controle", "Jumeler la manette", "配对手柄", "コントローラー接続", "컨트롤러 페어링", "कंट्रोलर जोड़ें", "إقران وحدة التحكم" },
-  ["connections"] = new[] { "Conexiones", "Connections", "Verbindungen", "Conexões", "Connexions", "网络连接", "接続設定", "연결", "कनेक्शन", "الاتصالات" },
-  ["all_settings"] = new[] { "Todos los ajustes", "All settings", "Alle Einstellungen", "Todas as configurações", "Tous les paramètres", "全部设置", "すべての設定", "모든 설정", "सभी सेटिंग्स", "كافة الإعدادات" },
-  ["unavailable"] = new[] { "No disponible", "Unavailable", "Nicht verfügbar", "Indisponível", "Indisponible", "不可用", "利用不可", "사용 불가", "अनुपलब्ध", "غير متاح" },
-  ["on"] = new[] { "Activado", "On", "Ein", "Ligado", "Activé", "开启", "オン", "켜짐", "चालू", "تشغيل" },
-  ["off"] = new[] { "Desactivado", "Off", "Aus", "Desligado", "Désactivé", "关闭", "オフ", "꺼짐", "बंद", "إيقاف" },
-  ["muted"] = new[] { "Silenciado", "Muted", "Stumm", "Mudo", "Muet", "已静音", "消音中", "음소거", "म्यूट", "مكتوم" },
-  ["preset_console_pc"] = new[] { "Consola o PC", "Console or PC", "Konsole oder PC", "Console ou PC", "Console ou PC", "主机或电脑", "ゲーム機 / PC", "콘솔 또는 PC", "कंसोल या पीसी", "منصة ألعاب أو كمبيوتر" },
-  ["preset_game_console"] = new[] { "Consola de videojuegos", "Game console", "Spielkonsole", "Console de videogame", "Console de jeux", "游戏主机", "ゲーム機", "게임 콘솔", "गेम कंसोल", "منصة ألعاب" },
-  ["preset_streaming"] = new[] { "Dispositivo de streaming", "Streaming device", "Streaming-Gerät", "Dispositivo de streaming", "Appareil de streaming", "流媒体设备", "ストリーミング機器", "스트리밍 기기", "स्ट्रीमिंग डिवाइस", "جهاز بث" },
-  ["preset_pc"] = new[] { "Ordenador / Steam", "Computer / Steam", "Computer / Steam", "Computador / Steam", "Ordinateur / Steam", "电脑 / Steam", "PC / Steam", "컴퓨터 / Steam", "कंप्यूटर / स्टीम", "كمبيوتر / ستيم" },
-  ["preset_player"] = new[] { "Reproductor multimedia", "Media player", "Medienplayer", "Reprodutor de mídia", "Lecteur multimédia", "多媒体播放器", "メディアプレーヤー", "미디어 플레이어", "मीडिया प्लेयर", "مشغل وسائط" },
-  ["preset_tv_box"] = new[] { "Decodificador de TV", "Set-top box", "TV-Receiver", "Conversor / TV Box", "Décodeur TV", "机顶盒", "セットトップボックス", "셋톱박스", "सेट-टॉप बॉक्स", "جهاز استقبال" },
-  ["preset_device"] = new[] { "Dispositivo externo", "External device", "Externes Gerät", "Dispositivo externo", "Périphérique externe", "外部设备", "外部機器", "외부 기기", "बाहरी डिवाइस", "جهاز خارجي" }
- };
+ string T(string key) => Localization.T(key, CurrentLangCode);
 
- string T(string key)
- {
-  if (I18N.TryGetValue(key, out var list) && currentLang >= 0 && currentLang < list.Length)
-   return list[currentLang];
-  return key;
- }
 
  Color ink => darkMode ? new Color(0.98f,0.98f,1.0f,1) : new Color(0.114f,0.114f,0.122f,1);
  Color muted => darkMode ? new Color(0.65f,0.70f,0.80f,1) : new Color(0.431f,0.431f,0.451f,1);

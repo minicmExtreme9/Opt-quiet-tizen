@@ -18,3 +18,17 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Paquetes generados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 1)**:
   - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). La configuración persiste correctamente tras editar preferencias y reiniciar la aplicación.
+
+---
+
+## PASO 2 — Internacionalización (Localization)
+- **Archivos creados / modificados**:
+  - `launcher/src/Localization.cs`: Nueva clase estática con diccionario anidado `Dictionary<string, Dictionary<string, string>>` por clave e idioma en vez de arrays posicionales frágiles. Funciones centralizadas `T(key, lang)`, `GetCulture(code)` y `FormatDate(dt, code)`.
+  - `launcher/src/Home.cs`: Eliminado el array monolítico `I18N` y métodos redundantes de fecha/cultura; reemplazados por llamadas directas a `Localization`.
+  - `launcher/src/Home.csproj`: Inclusión de `Localization.cs` en los ítems de compilación.
+- **Validación previa**:
+  - Tests unitarios verificados: Búsqueda exacta en los 10 idiomas ("es", "en", "de", "pt", "fr", "zh", "ja", "ko", "hi", "ar"), manejo de fallbacks ante claves o códigos desconocidos y formateo de fechas.
+  - Compilación .NET 6 limpia (0 errores, 0 advertencias).
+  - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
+- **Resultado en TV del dueño (Punto de control 2)**:
+  - *Pendiente de verificación en TV por el dueño.*
