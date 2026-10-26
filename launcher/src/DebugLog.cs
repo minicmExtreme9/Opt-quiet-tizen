@@ -29,12 +29,12 @@ public struct LogEntry
 }
 
 /// <summary>
-/// In-memory ring buffer for diagnostics and error tracking (~50 entries).
+/// In-memory ring buffer for diagnostics and error tracking (~100 entries).
 /// Replaces continuous disk writes on every interaction with zero-I/O memory logging.
 /// </summary>
 public static class DebugLog
 {
-    public const int Capacity = 50;
+    public const int Capacity = 100;
     private static readonly LogEntry[] _entries = new LogEntry[Capacity];
     private static int _head = 0;
     private static int _count = 0;
@@ -77,7 +77,22 @@ public static class DebugLog
     public static void RecordState(string activity, string summary)
     {
         LastState = $"{activity} | {summary}";
-        Log("STATE", "State", $"{activity}: {summary}");
+        if (activity != "focus")
+        {
+            Log("STATE", "State", $"{activity}: {summary}");
+        }
+    }
+
+    public static void Clear()
+    {
+        lock (_lock)
+        {
+            _head = 0;
+            _count = 0;
+            ErrorCount = 0;
+            WarnCount = 0;
+            Array.Clear(_entries, 0, _entries.Length);
+        }
     }
 
     public static List<string> GetAll()
