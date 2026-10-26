@@ -47,3 +47,19 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 3)**:
   - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). Todos los controles respondieron correctamente (volumen, brillo, modo juego, temporizador de apagado y cambio de fuente HDMI).
+
+
+---
+
+## PASO 4 — Eliminar los catch vacíos (DebugLog & Ring Buffer)
+- **Archivos creados / modificados**:
+  - `launcher/src/DebugLog.cs`: Nueva clase y estructura `LogEntry` que implementa un ring buffer circular de 50 entradas en memoria. Soporta niveles (`INFO`, `WARN`, `ERROR`, `STATE`), categorías, seguimiento de excepciones y evento de notificación `OnErrorLogged`. Permite volcado manual a `/tmp/quiet-home-debuglog.txt` sin realizar escrituras continuas en disco.
+  - `launcher/src/Home.cs`: Reemplazados todos los bloques `catch{}` vacíos por llamadas a `DebugLog.Warn` y `DebugLog.Error`. Conectado el evento `DebugLog.OnErrorLogged` con `ShowError` para degradación visual inmediata en la UI ante errores. Reemplazado `WriteState(activity)` (que antes escribía a `/tmp/quiet-home-state.txt` en cada pulsación del mando) por `DebugLog.RecordState`, eliminando el desgaste de memoria flash. Añadido visor en pantalla `ToggleDebugLogView()` accesible mediante las teclas `Info`, `d`, o `0`.
+  - `launcher/src/NativeCapabilities.cs`: Actualizado el manejo de excepciones de todos los sondeos y llamadas P/Invoke para registrar advertencias y errores en `DebugLog`.
+  - `launcher/src/Home.csproj`: Inclusión de `DebugLog.cs` en los ítems de compilación.
+- **Validación previa**:
+  - Compilación .NET 6 limpia (0 errores, 0 advertencias).
+  - Tests unitarios en `tests/DebugLogTest.cs`: verificado desborde circular a 50 entradas, preservación FIFO de los registros más recientes, conteo de errores y advertencias, y volcado a archivo.
+  - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
+- **Resultado en TV del dueño (Punto de control 4)**:
+  - *Pendiente de validación en hardware real por el dueño.*

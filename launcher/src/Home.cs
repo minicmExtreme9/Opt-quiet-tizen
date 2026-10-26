@@ -126,10 +126,14 @@ public sealed class QuietHome : NUIApplication
  {
   base.OnCreate();
   NativeCapabilities.Initialize();
+  DebugLog.OnErrorLogged += (msg) => ShowError(msg);
   try{
    fontLoaded=FontClient.Instance.AddCustomFontDirectory(Root+"fonts");
    FontClient.Instance.AddCustomFontDirectory("/usr/share/fonts");
-  }catch{fontLoaded=false;}
+  }catch(Exception ex){
+   fontLoaded=false;
+   DebugLog.Warn("Font", "FontClient failed loading fonts", ex);
+  }
   LoadConfig();
   try{
    string appsPath=Root+"apps.json";
@@ -140,8 +144,17 @@ public sealed class QuietHome : NUIApplication
     library=AppLibrary.Load(appsPath);
    else if(File.Exists(tmpPath))
     library=AppLibrary.Load(tmpPath);
-  }catch{try{library=AppLibrary.Load(Root+"apps.json");}catch(Exception ex2){libraryError=ex2.Message;}}
-  try{if(File.Exists("/tmp/quiet-home-theme.txt")){string t=File.ReadAllText("/tmp/quiet-home-theme.txt").Trim();if(t=="light")darkMode=false;else if(t=="dark")darkMode=true;}}catch{}
+  }catch(Exception ex){
+   DebugLog.Warn("Library", "Primary apps load failed, trying fallback", ex);
+   try{
+    library=AppLibrary.Load(Root+"apps.json");
+   }catch(Exception ex2){
+    libraryError=ex2.Message;
+    DebugLog.Error("Library", "Fallback apps load failed", ex2);
+    ShowError("Apps error: " + ex2.Message);
+   }
+  }
+  try{if(File.Exists("/tmp/quiet-home-theme.txt")){string t=File.ReadAllText("/tmp/quiet-home-theme.txt").Trim();if(t=="light")darkMode=false;else if(t=="dark")darkMode=true;}}catch(Exception ex){DebugLog.Warn("Theme", "Theme read failed", ex);}
   Window.Default.BackgroundColor=bg;
   Window.Default.Title="Opt-quiet-tizen";Window.Default.KeyEvent+=OnKey;
   PreloadArtwork();
@@ -173,7 +186,7 @@ public sealed class QuietHome : NUIApplication
    if (!string.IsNullOrEmpty(cfg.Hdmi2Desc)) hdmiDescs[1] = cfg.Hdmi2Desc;
    if (!string.IsNullOrEmpty(cfg.Hdmi3Name)) hdmiNames[2] = cfg.Hdmi3Name;
    if (!string.IsNullOrEmpty(cfg.Hdmi3Desc)) hdmiDescs[2] = cfg.Hdmi3Desc;
-  }catch{}
+  }catch(Exception ex){DebugLog.Warn("Config", "LoadConfig failed", ex);}
  }
 
  void SaveConfig()
@@ -194,7 +207,7 @@ public sealed class QuietHome : NUIApplication
     Hdmi3Desc = hdmiDescs[2]
    };
    SettingsStore.Save(cfg, ConfigFile, Root + "config.json");
-  }catch{}
+  }catch(Exception ex){DebugLog.Error("Config", "SaveConfig failed", ex);ShowError("Failed to save launcher settings.");}
  }
 
  protected override void OnResume()
@@ -265,7 +278,7 @@ public sealed class QuietHome : NUIApplication
   WriteState(activity);
  }
 
- void RefreshSource(){try{int n;if(NativeCapabilities.GetVconfInt("memory/system/source_type",out n)&&n>=13&&n<=16)lastSource=n;}catch{}}
+ void RefreshSource(){try{int n;if(NativeCapabilities.GetVconfInt("memory/system/source_type",out n)&&n>=13&&n<=16)lastSource=n;}catch(Exception ex){DebugLog.Warn("Source", "RefreshSource failed", ex);}}
  int SourceIndex(){return lastSource==14?1:lastSource==15?2:0;}
 
  View Add(View v){scene.Add(v);if(pageContainer!=null)pageContainer.Add(v);else Window.Default.Add(v);return v;}
@@ -436,13 +449,15 @@ public sealed class QuietHome : NUIApplication
     NativeCapabilities.PlayKeySound("/usr/share/feedback/sound/operation/move.wav", 0);
    else if(File.Exists(Root+"click.wav"))
     NativeCapabilities.PlayKeySound(Root+"click.wav", 0);
-  }catch{}
+  }catch(Exception ex){
+   DebugLog.Warn("Sound", "PlayTick sound failed", ex);
+  }
  }
 
  Color HexColor(string hex)
  {
   try{int n=Convert.ToInt32(hex.TrimStart('#'),16);return new Color(((n>>16)&255)/255f,((n>>8)&255)/255f,(n&255)/255f,1);}
-  catch{return white;}
+  catch(Exception ex){DebugLog.Warn("Color", "HexColor failed for " + hex, ex);return white;}
  }
 
  void AddAppArtwork(View card,LibraryApp app,int w,int h)
@@ -731,6 +746,18 @@ public sealed class QuietHome : NUIApplication
   string k=e.Key.KeyPressedName;
   var state=e.Key.State;
 
+  if(debugOverlay!=null){
+   if(state==Key.StateType.Down&&(k=="XF86Back"||k=="Back"||k=="Escape"||k=="Return"||k=="KP_Enter"||k=="XF86Info"||k=="Info"||k=="d"||k=="D")){
+    ToggleDebugLogView();
+   }
+   return;
+  }
+
+  if(state==Key.StateType.Down&&(k=="XF86Info"||k=="Info"||k=="d"||k=="D")){
+   ToggleDebugLogView();
+   return;
+  }
+
   if(modalOverlay!=null){
    if(state==Key.StateType.Down)HandleModalKey(k);
    return;
@@ -779,7 +806,7 @@ public sealed class QuietHome : NUIApplication
    }
    else if(k=="Return"||k=="KP_Enter"){if(area==0){area=1;selected=0;UpdateFocus();}else Activate();}
    else if(k=="XF86Back"||k=="Back"||k=="Escape"||k=="XF86Exit")SelectSource(lastSource);
-  }catch(Exception ex){ShowError(ex.Message);}
+  }catch(Exception ex){DebugLog.Error("Key", "OnKey error for " + k, ex);ShowError(ex.Message);}
  }
 
  void HandleKeyUp(string k)
@@ -832,7 +859,10 @@ public sealed class QuietHome : NUIApplication
   try{
    AppLibrary.Save(Root+"apps.json",library);
    AppLibrary.Save("/tmp/quiet-home-apps.json",library);
-  }catch(Exception ex){ShowError(ex.Message);}
+  }catch(Exception ex){
+   DebugLog.Error("Library", "SaveLibrary failed", ex);
+   ShowError("Save apps failed: " + ex.Message);
+  }
  }
 
  bool HandleLibraryKey(string k)
@@ -917,7 +947,7 @@ public sealed class QuietHome : NUIApplication
   }
   if(a=="toggle:theme"){
    darkMode=!darkMode;
-   try{File.WriteAllText("/tmp/quiet-home-theme.txt",darkMode?"dark":"light");}catch{}
+   try{File.WriteAllText("/tmp/quiet-home-theme.txt",darkMode?"dark":"light");}catch(Exception ex){DebugLog.Warn("Theme", "Theme toggle write failed", ex);}
    BuildPage(false);
    return;
   }
@@ -1137,9 +1167,9 @@ public sealed class QuietHome : NUIApplication
   foreach(var id in new[]{"brightness","game-mode","sleeptimer"}){
    try{if(NativeCapabilities.GetItemValue(id,out var name,out var value)&&!string.IsNullOrEmpty(value)){settingValues[id]=value;settingNames[id]=name;}else{settingValues.Remove(id);settingNames.Remove(id);}
     settingEnabled[id]=NativeCapabilities.GetItemEnable(id,out var enabled)&&enabled;
-   }catch{settingValues.Remove(id);settingNames.Remove(id);settingEnabled[id]=false;}
+   }catch(Exception ex){settingValues.Remove(id);settingNames.Remove(id);settingEnabled[id]=false;DebugLog.Warn("Settings", "Item query failed: " + id, ex);}
   }
-  try{if(!NativeCapabilities.GetItemMinMaxStepValue("brightness",out brightnessMin,out brightnessMax,out brightnessStep)||brightnessStep<=0){brightnessMin=0;brightnessMax=50;brightnessStep=1;}}catch{}
+  try{if(!NativeCapabilities.GetItemMinMaxStepValue("brightness",out brightnessMin,out brightnessMax,out brightnessStep)||brightnessStep<=0){brightnessMin=0;brightnessMax=50;brightnessStep=1;}}catch(Exception ex){brightnessMin=0;brightnessMax=50;brightnessStep=1;DebugLog.Warn("Settings", "Brightness step query failed", ex);}
  }
 
  string SettingValue(string id){return settingValues.TryGetValue(id,out var v)?v:"";}
@@ -1147,7 +1177,7 @@ public sealed class QuietHome : NUIApplication
  bool CanEdit(string id){return settingEnabled.TryGetValue(id,out var enabled)&&enabled&&settingValues.ContainsKey(id);}
  void SetSetting(string id,string value){
   if(!CanEdit(id)){ShowError("This setting is unavailable for the current input.");return;}
-  bool ok=false;try{ok=NativeCapabilities.SetItemValue(id,value);}catch{}
+  bool ok=false;try{ok=NativeCapabilities.SetItemValue(id,value);}catch(Exception ex){DebugLog.Error("Settings", "SetItemValue failed for " + id, ex);}
   RefreshSettings();UpdateFocus();
   bool verified=ok&&SettingValue(id)==value;
   if(!verified)ShowError("The TV could not apply this setting. Try Advanced settings.");
@@ -1169,6 +1199,7 @@ public sealed class QuietHome : NUIApplication
    ShowError("Input could not be switched. Open Advanced settings to check the connection.");
    WriteState("source_failed:" + r);
   } catch(Exception ex) {
+   DebugLog.Error("Source", "SelectSource exception for " + source, ex);
    ShowError(ex.Message);
   }
  }
@@ -1183,12 +1214,90 @@ public sealed class QuietHome : NUIApplication
    int res=NativeCapabilities.ExecuteSystem("app_launcher -s "+id);
    WriteState("launch:"+id+":sys:"+res);
    if(res!=0&&r!=0)ShowError("Could not open this screen. Try Advanced settings.");
-  }catch(Exception ex){ShowError(ex.Message);}
+  }catch(Exception ex){
+   DebugLog.Error("App", "Launch exception for " + id, ex);
+   ShowError(ex.Message);
+  }
  }
 
  void ShowError(string text){notice.Text=text;}
 
- void WriteState(string activity){try{File.WriteAllText(StateFile,DateTime.UtcNow.ToString("o")+"\npage="+page+"\nselected="+selected+"\narea="+area+"\nreordering="+reordering+"\nactivity="+activity+"\nkey="+lastKey+"\nfont_loaded="+fontLoaded+"\nstyle=free-my-tv\nbuild_ms="+buildMilliseconds+"\nlibrary_page="+libraryPage+"\nlibrary_count="+library.Count+"\nlibrary_error="+libraryError+"\nselected_name="+(selected>=0&&selected<slots.Count?slots[selected].Name:"")+"\nartwork_cached="+artworkCache.Count+"\nartwork_ready="+artworkReadyCount+"\nartwork_pending="+ArtworkPending()+"\nartwork_views_created="+artworkViewsCreated+"\npage_artwork_cold="+pageArtworkCold+"\ntheme="+(darkMode?"dark":"light")+"\nprocess_id="+ProcessId+"\nediting="+editing+"\nvolume="+currentVolume+"\nmute="+currentMute+"\nbrightness="+SettingValue("brightness")+"\ngame-mode="+SettingValue("game-mode")+"\nsleeptimer="+SettingValue("sleeptimer")+"\n");}catch{}}
+ View debugOverlay;
+ void ToggleDebugLogView()
+ {
+  if (debugOverlay != null)
+  {
+   Window.Default.Remove(debugOverlay);
+   debugOverlay.Dispose();
+   debugOverlay = null;
+   return;
+  }
+
+  DebugLog.DumpToFile("/tmp/quiet-home-debuglog.txt");
+
+  debugOverlay = new View {
+   Position2D = new Position2D(0, 0),
+   Size2D = new Size2D(1920, 1080),
+   BackgroundColor = new Color(0, 0, 0, 0.88f)
+  };
+
+  var box = new View {
+   Position2D = new Position2D(180, 80),
+   Size2D = new Size2D(1560, 920),
+   BackgroundColor = darkMode ? new Color(0.10f, 0.12f, 0.18f, 0.98f) : new Color(0.96f, 0.96f, 0.98f, 0.98f),
+   CornerRadius = new Vector4(24, 24, 24, 24),
+   BorderlineWidth = 3,
+   BorderlineColor = accent
+  };
+  debugOverlay.Add(box);
+
+  box.Add(new TextLabel {
+   Text = $"Registro de Depuracion (Debug Log) - {DebugLog.ErrorCount} errores, {DebugLog.WarnCount} avisos",
+   Position2D = new Position2D(40, 24),
+   Size2D = new Size2D(1480, 45),
+   PixelSize = 30,
+   FontFamily = "Quiet Inter Semibold",
+   TextColor = ink
+  });
+
+  box.Add(new TextLabel {
+   Text = "Atras (Back) o Aceptar para cerrar * Volcado guardado en /tmp/quiet-home-debuglog.txt",
+   Position2D = new Position2D(40, 72),
+   Size2D = new Size2D(1480, 30),
+   PixelSize = 18,
+   FontFamily = "Quiet Inter Medium",
+   TextColor = muted
+  });
+
+  var logs = DebugLog.GetAll();
+  int start = Math.Max(0, logs.Count - 16);
+  for (int i = start; i < logs.Count; i++)
+  {
+   int lineIdx = i - start;
+   string line = logs[i];
+   Color lineCol = line.Contains("[ERROR]") ? new Color(1f, 0.35f, 0.35f, 1) :
+                   line.Contains("[WARN]") ? new Color(1f, 0.85f, 0.25f, 1) :
+                   line.Contains("[STATE]") ? captionMuted : ink;
+
+   box.Add(new TextLabel {
+    Text = line,
+    Position2D = new Position2D(40, 115 + lineIdx * 48),
+    Size2D = new Size2D(1480, 42),
+    PixelSize = 18,
+    FontFamily = "Quiet Inter Medium",
+    TextColor = lineCol
+   });
+  }
+
+  Window.Default.Add(debugOverlay);
+  debugOverlay.RaiseToTop();
+ }
+
+ void WriteState(string activity)
+ {
+  string summary = $"page={page} sel={selected} area={area} reord={reordering} key={lastKey} vol={currentVolume} mute={currentMute}";
+  DebugLog.RecordState(activity, summary);
+ }
 
  public static void Main(string[] args){using(var app=new QuietHome())app.Run(args);}
 }
