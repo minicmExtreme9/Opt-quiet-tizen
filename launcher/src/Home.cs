@@ -955,7 +955,7 @@ public sealed class QuietHome : NUIApplication
   if(a.StartsWith("app:org.tizen.menu")){Launch("org.tizen.menu");return;}
   if(a.StartsWith("app:")){Launch(a.Substring(4));return;}
   if(a.StartsWith("page:")){page=int.Parse(a.Substring(5));selected=0;area=1;BuildPage(true);return;}
-  if(a=="controllers"){Launch("org.tizen.menu","bluetooth_audio");return;}
+  if(a=="controllers"){Launch("org.tizen.menu","add-bluetooth-keyboard");return;}
   if(a=="network"){Launch("org.tizen.menu","networksettings");return;}
   if(a=="volume"||a=="brightness"){RefreshSettings();if(a=="brightness"&&!CanEdit(a)){ShowError("Brightness is unavailable for the current input.");return;}editing=a;UpdateFocus();return;}
   if(a=="game-mode"){RefreshSettings();SetSetting(a,SettingValue(a)=="1"?"0":"1");return;}

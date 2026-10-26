@@ -78,7 +78,7 @@ public static class NativeCapabilities
     public static bool HasVolume => HasSoundManager;
     public static bool HasMute => HasSoundManager;
     public static bool HasBrightness => HasSettingsApi;
-    public static bool HasGameMode => HasSettingsApi;
+    public static bool HasGameMode => false; // Confirmed non-functional on TV hardware by owner
     public static bool HasSleepTimer => HasSettingsApi;
     public static bool HasHdmiSwitch => HasAppControl;
     public static bool HasControllers => HasAppControl;
