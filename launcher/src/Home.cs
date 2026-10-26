@@ -137,6 +137,7 @@ public sealed class QuietHome : NUIApplication
   }
   LoadConfig();
   try{
+   AtomicFileWriter.CleanOrphanTmp(AppsDataPath);
    if(File.Exists(AppsDataPath))
     library=AppLibrary.Load(AppsDataPath);
    else

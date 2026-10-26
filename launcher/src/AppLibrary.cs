@@ -22,6 +22,7 @@ public static class AppLibrary
  public const int Columns=5, Rows=3, PageSize=Columns*Rows;
  public static List<LibraryApp> Load(string path)
  {
+  AtomicFileWriter.CleanOrphanTmp(path);
   var apps=JsonSerializer.Deserialize<List<LibraryApp>>(File.ReadAllText(path));
   if(apps==null||apps.Count==0)throw new InvalidDataException("App library is empty.");
   var ids=new HashSet<string>();
@@ -43,12 +44,7 @@ public static class AppLibrary
  {
   var options = new JsonSerializerOptions { WriteIndented = true };
   string json = JsonSerializer.Serialize(apps, options);
-  string dir = Path.GetDirectoryName(path);
-  if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-  {
-   Directory.CreateDirectory(dir);
-  }
-  File.WriteAllText(path, json);
+  AtomicFileWriter.WriteAllTextSafe(path, json);
  }
  public static int PageCount(int count)=>(count+PageSize-1)/PageSize;
  public static int VisibleCount(int count,int page)=>Math.Max(0,Math.Min(PageSize,count-page*PageSize));

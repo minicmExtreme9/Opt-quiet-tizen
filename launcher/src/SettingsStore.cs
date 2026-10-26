@@ -57,6 +57,7 @@ public static class SettingsStore
 
     public static LauncherSettings Load(string primaryPath, string fallbackTemplatePath = null)
     {
+        AtomicFileWriter.CleanOrphanTmp(primaryPath);
         string path = File.Exists(primaryPath) ? primaryPath : 
                       (!string.IsNullOrEmpty(fallbackTemplatePath) && File.Exists(fallbackTemplatePath) ? fallbackTemplatePath : null);
         if (string.IsNullOrEmpty(path))
@@ -98,12 +99,7 @@ public static class SettingsStore
         try
         {
             string json = JsonSerializer.Serialize(settings, JsonOptions);
-            string dir = Path.GetDirectoryName(primaryPath);
-            if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
-            {
-                Directory.CreateDirectory(dir);
-            }
-            File.WriteAllText(primaryPath, json);
+            AtomicFileWriter.WriteAllTextSafe(primaryPath, json);
         }
         catch (Exception ex)
         {

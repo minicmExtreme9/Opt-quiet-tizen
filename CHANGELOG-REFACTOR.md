@@ -113,3 +113,20 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - **Fuente única de verdad**: `SaveLibrary()` en `Home.cs` escribe únicamente a `/opt/usr/home/owner/data/quiet-home-apps.json`.
   - **Carga limpia en startup**: Al iniciar, `Home.cs` comprueba si existe `/opt/usr/home/owner/data/quiet-home-apps.json` y lo carga. Si no existe (primera ejecución tras instalación limpia), carga el catálogo semilla por defecto desde `Root + "apps.json"`.
   - **Alineación con SettingsStore**: `SettingsStore.cs` y la persistencia de configuración general (`quiet-home-config.json`) fueron unificados bajo el mismo esquema de fuente única en `/opt/usr/home/owner/data/quiet-home-config.json` con plantilla fallback de solo lectura en el bundle, eliminando también escrituras paralelas a `/tmp`.
+
+---
+
+## PERSISTENCIA SEGURA ANTE CORTE DE ENERGÍA — AtomicFileWriter (fsync explícito + rename atómico)
+- **Problema identificado en hardware**:
+  - `File.WriteAllText()` solo confirma datos en el *page cache* de Linux en RAM. Tras un soft-reboot, el kernel tiene tiempo de volcar las páginas sucias a flash; sin embargo, ante una desconexión abrupta del cable de alimentación (corte de energía real), las escrituras pendientes en RAM se pierden por completo.
+- **Implementación (`launcher/src/AtomicFileWriter.cs`)**:
+  - **Mecanismo de fsync**: Se combinaron dos niveles de garantía:
+    1. A nivel de .NET 6: Apertura del stream con `FileOptions.WriteThrough` y llamada explícita a `FileStream.Flush(flushToDisk: true)` (que en el runtime de Unix invoca internamente `fsync` / `fdatasync` sobre el descriptor de archivo).
+    2. A nivel de SO / libc: P/Invoke directo a `libc.so.6: fsync(int fd)` sobre el `SafeFileHandle` para forzar la sincronización física del bloque de datos en flash antes de cerrar el descriptor.
+  - **Reemplazo atómico (`File.Move`)**: El contenido se escribe en `path.tmp` en el mismo directorio (`/opt/usr/home/owner/data/`), garantizando que la operación se realice dentro del mismo sistema de archivos. Una vez confirmado el `fsync`, se ejecuta `File.Move(tmpPath, path, overwrite: true)` (llamada a `rename(2)` de POSIX), lo que garantiza que nunca exista un archivo corrupto o a medio escribir.
+  - **Sincronización de metadatos de directorio**: P/Invoke directo a `libc.so.6: sync()` inmediatamente después de `File.Move` para asegurar que la nueva entrada de directorio y el inodo queden grabados en el diario de la memoria flash ante un apagón instantáneo.
+  - **Protección contra temporales huérfanos**: `AtomicFileWriter.CleanOrphanTmp(path)` verifica en `AppLibrary.Load()` y `SettingsStore.Load()` si quedó algún `.tmp` huérfano producto de un corte de energía a mitad del proceso de guardado y lo limpia de forma segura sin degradar la lectura del archivo definitivo.
+  - **Adopción completa**:
+    - `AppLibrary.Save()` utiliza `AtomicFileWriter.WriteAllTextSafe()` para `quiet-home-apps.json`.
+    - `SettingsStore.Save()` utiliza `AtomicFileWriter.WriteAllTextSafe()` para `quiet-home-config.json`.
+    - Incluido en `Home.csproj` y verificado en compilaciones Full y Lite (0 errores, 0 avisos).
