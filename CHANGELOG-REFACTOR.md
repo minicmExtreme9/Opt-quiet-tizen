@@ -17,4 +17,4 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Tests unitarios verificados: Guardado y carga tipada, deserialización, migración de legado y reescritura de formato.
   - Paquetes generados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 1)**:
-  - *Pendiente de verificación en TV por el dueño.*
+  - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). La configuración persiste correctamente tras editar preferencias y reiniciar la aplicación.
