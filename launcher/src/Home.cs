@@ -747,13 +747,13 @@ public sealed class QuietHome : NUIApplication
   var state=e.Key.State;
 
   if(debugOverlay!=null){
-   if(state==Key.StateType.Down&&(k=="XF86Back"||k=="Back"||k=="Escape"||k=="Return"||k=="KP_Enter"||k=="XF86Info"||k=="Info"||k=="d"||k=="D")){
+   if(state==Key.StateType.Down&&(k=="XF86Back"||k=="Back"||k=="Escape"||k=="Return"||k=="KP_Enter"||k=="XF86Info"||k=="Info"||k=="d"||k=="D"||k=="0"||k=="MediaPlayPause"||k=="Play")){
     ToggleDebugLogView();
    }
    return;
   }
 
-  if(state==Key.StateType.Down&&(k=="XF86Info"||k=="Info"||k=="d"||k=="D")){
+  if(state==Key.StateType.Down&&(k=="XF86Info"||k=="Info"||k=="d"||k=="D"||k=="0"||k=="MediaPlayPause"||k=="Play")){
    ToggleDebugLogView();
    return;
   }
@@ -1001,9 +1001,9 @@ public sealed class QuietHome : NUIApplication
    TextColor=muted
   });
 
-  modalRowViews=new View[7];
-  modalRowLabels=new TextLabel[7];
-  modalRowValues=new TextLabel[7];
+  modalRowViews=new View[8];
+  modalRowLabels=new TextLabel[8];
+  modalRowValues=new TextLabel[8];
 
   string[] rowTitles = new[] {
    "HDMI 1",
@@ -1012,16 +1012,17 @@ public sealed class QuietHome : NUIApplication
    T("language"),
    T("sound"),
    T("animations"),
+   "Registro de Depuracion (Debug Log)",
    T("save_close")
   };
 
-  for(int i=0;i<7;i++){
-   int y=142+i*94;
+  for(int i=0;i<8;i++){
+   int y=136+i*88;
    var rView=new View{
     Position2D=new Position2D(40,y),
-    Size2D=new Size2D(1020,80),
+    Size2D=new Size2D(1020,76),
     BackgroundColor=i==0?(darkMode?new Color(1,1,1,0.12f):new Color(0,0,0,0.08f)):new Color(0,0,0,0),
-    CornerRadius=new Vector4(18,18,18,18),
+    CornerRadius=new Vector4(16,16,16,16),
     BorderlineWidth=i==0?2:0,
     BorderlineColor=accent
    };
@@ -1030,9 +1031,9 @@ public sealed class QuietHome : NUIApplication
 
    var lbl=new TextLabel{
     Text=rowTitles[i],
-    Position2D=new Position2D(24,16),
-    Size2D=new Size2D(340,48),
-    PixelSize=25,
+    Position2D=new Position2D(24,14),
+    Size2D=new Size2D(440,48),
+    PixelSize=24,
     FontFamily="Quiet Inter Semibold",
     TextColor=ink,
     VerticalAlignment=VerticalAlignment.Center
@@ -1042,9 +1043,9 @@ public sealed class QuietHome : NUIApplication
 
    var val=new TextLabel{
     Text=GetModalRowValueText(i),
-    Position2D=new Position2D(380,16),
-    Size2D=new Size2D(616,48),
-    PixelSize=23,
+    Position2D=new Position2D(480,14),
+    Size2D=new Size2D(516,48),
+    PixelSize=22,
     FontFamily="Quiet Inter Medium",
     TextColor=accent,
     HorizontalAlignment=HorizontalAlignment.End,
@@ -1074,6 +1075,9 @@ public sealed class QuietHome : NUIApplication
    return $"◀  {(animationsEnabled ? T("sound_on") : T("sound_off"))}  ▶";
   }
   if(row==6){
+   return "Ver / Volcar ▶";
+  }
+  if(row==7){
    return "OK";
   }
   return "";
@@ -1081,7 +1085,7 @@ public sealed class QuietHome : NUIApplication
 
  void UpdateModalRowHighlights()
  {
-  for(int i=0;i<7;i++){
+  for(int i=0;i<8;i++){
    bool isSel = i == modalRow;
    modalRowViews[i].BackgroundColor = isSel ? (darkMode?new Color(1,1,1,0.14f):new Color(0,0,0,0.08f)) : new Color(0,0,0,0);
    modalRowViews[i].BorderlineWidth = isSel ? 3 : 0;
@@ -1099,12 +1103,12 @@ public sealed class QuietHome : NUIApplication
    return;
   }
   if(k=="Up"){
-   modalRow=(modalRow-1+7)%7;
+   modalRow=(modalRow-1+8)%8;
    UpdateModalRowHighlights();
    return;
   }
   if(k=="Down"){
-   modalRow=(modalRow+1)%7;
+   modalRow=(modalRow+1)%8;
    UpdateModalRowHighlights();
    return;
   }
@@ -1116,6 +1120,10 @@ public sealed class QuietHome : NUIApplication
   }
   if(k=="Return"||k=="KP_Enter"){
    if(modalRow==6){
+    ToggleDebugLogView();
+    return;
+   }
+   if(modalRow==7){
     CloseLauncherSettings();
     return;
    }
