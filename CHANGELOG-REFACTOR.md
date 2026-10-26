@@ -62,4 +62,4 @@ Cada paso es probado en hardware real antes de avanzar al siguiente.
   - Tests unitarios en `tests/DebugLogTest.cs`: verificado desborde circular a 50 entradas, preservación FIFO de los registros más recientes, conteo de errores y advertencias, y volcado a archivo.
   - Paquetes actualizados: `QuietHome-TV-1.0.0.tpk` y `Opt-quiet-tizen-v1.0.1.zip` en Downloads.
 - **Resultado en TV del dueño (Punto de control 4)**:
-  - *Pendiente de validación en hardware real por el dueño.*
+  - Verificado y confirmado como funcional en Samsung Smart TV real (QLED). El visor del Debug Log abrió perfectamente en pantalla mostrando "0 errores, 0 avisos". Se comprobó además que la tarjeta no funcional de Modo Juego fue ocultada limpiamente y que "Vincular mando" abrió directamente el emparejamiento Bluetooth.
